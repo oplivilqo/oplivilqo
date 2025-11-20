@@ -42,7 +42,7 @@ def draw_text_auto(
     align: Align = "center",
     valign: VAlign = "middle",
     line_spacing: float = 0.15,
-    bracket_color: Tuple[int, int, int] = (137,177,251),  # 中括号及内部内容颜色
+    bracket_color: Tuple[int, int, int] = (249,89,94),  # 中括号及内部内容颜色
     image_overlay: Union[str, Image.Image,None]=None,
     role_name: str = "unknown",  # 添加角色名称参数
     text_configs_dict: dict = None,  # 添加文字配置字典参数

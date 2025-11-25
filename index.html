@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>魔法少女的魔女审判 文本框表情包生成器</title>
+    <!-- CSS files -->
+    <link href="./css/tabler.min.css" type="text/css" rel="stylesheet" />
+    <style>
+        @font-face {
+            font-family: "华文中宋";
+            src: url("./assets/STZHONGS.TTF");
+        }
+    </style>
+</head>
+<body data-bs-theme="dark">
+    <div class="page">
+        <div class="page-wrapper">
+            <!-- Page header -->
+            <div class="page-header d-print-none">
+                <div class="container-xl">
+                    <div class="row g-2 align-items-center">
+                        <div class="col">
+                            <!-- Page pre-title -->
+                            <div class="page-pretitle">文本框表情包生成器</div>
+                            <h2 class="page-title">魔法少女的魔女审判</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Page body -->
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="mb-3">
+                        <label class="form-label">背景图</label>
+                        <div class="row g-2" id="backgrounds_div"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色</label>
+                        <div class="row g-2" id="characters_div"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">表情</label>
+                        <div class="row g-2" id="emotions_div"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">文本</label>
+                        <div class="row g-2" id="texts_div">
+                            <div class="col">
+                                <input type="text" name="text" class="form-control" placeholder="输入文本" onchange="updateCanvas()"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">字体大小</label>
+                        <input type="range" name="text_font_size" class="form-range" value="128" min="48" max="256" step="1" onchange="updateCanvas()"/>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="h3 mb-0">成品图预览</div>
+                        <button class="btn" onclick="downloadImage()">下载保存</button>
+                    </div>
+                    <canvas class="img-fluid" id="canvas" width="2560" height="834"></canvas>
+                </div>
+            </div>
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="row text-center align-items-center flex-row-reverse">
+                        <div class="col-md-auto ms-md-auto">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item"><a href="https://github.com/Blue-Roar/textbox-mahoushoujo_no_majosaiban" target="_blank">GitHub 仓库</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-12 col-md-auto mt-3 mt-md-0">
+                            <ul class="list-inline list-inline-dots mb-0">
+                                <li class="list-inline-item">图片素材 © Re,AER LLC./Acacia</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div><!-- page-wrapper -->
+    </div><!-- page -->
+    <script src="./js/jquery.min.js" type="application/javascript"></script>
+    <script src="./js/FileSaver.min.js" type="application/javascript"></script>
+    <script src="./js/tabler.min.js" type="application/javascript"></script>
+    <script src="./js/consts.js" type="application/javascript"></script>
+    <script src="./js/functions.js" type="application/javascript"></script>
+    <script defer>
+        init();
+    </script>
+</body>
+</html>

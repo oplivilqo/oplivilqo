@@ -609,14 +609,13 @@ def Start():
                 role_name=character_name,  # 传递角色名称
                 text_configs_dict=text_configs_dict,  # 传递文字配置字典
                 )
-        else:
-    
+
     elif text != "":
         print("Get text: "+text)
 # ==================== 新增功能开始 ====================
         # 定义高亮规则变量，默认为 None
         highlight_args = {}
-        
+
         # 如果当前角色是夏目安安 (anan)
         if character_name == "anan":
             # 使用正则表达式匹配中文方括号及内容
@@ -643,6 +642,9 @@ def Start():
                 )
             if png_bytes is not None:
                 return png_bytes
+        except Exception as e:
+            print("Generate image failed:", e)
+            return
     if png_bytes is None:
         print("Generate image failed")
         return

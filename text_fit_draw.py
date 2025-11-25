@@ -2,10 +2,24 @@ from io import BytesIO
 from typing import Tuple, Union, Literal, Optional
 from PIL import Image, ImageDraw, ImageFont
 import os
+import re
 import sys
-import time
-import urllib.request
-from urllib.error import URLError, HTTPError
+
+# ===== PyInstaller 资源路径处理函数 =====
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径，兼容开发环境和打包后的环境"""
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
+
+try:
+    from pilmoji import Pilmoji
+    PILMOJI_AVAILABLE = True
+except ImportError:
+    PILMOJI_AVAILABLE = False
+    print("警告: pilmoji未安装，emoji将以黑白显示。安装方法: pip install pilmoji")
 
 Align = Literal["left", "center", "right"]
 VAlign = Literal["top", "middle", "bottom"]
@@ -33,141 +47,20 @@ def compress_image(image: Image.Image) -> Image.Image:
 
     return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-
-# ---------------- Emoji 识别与 cluster 拆分 ----------------
-
-ZWJ = 0x200D
-VS16 = 0xFE0F
-
-def is_regional_indicator(cp: int) -> bool:
-    return 0x1F1E6 <= cp <= 0x1F1FF
-
-def is_skin_tone(cp: int) -> bool:
-    return 0x1F3FB <= cp <= 0x1F3FF
-
-def is_emoji_base(cp: int) -> bool:
-    # 覆盖主要 emoji 区 + 常见符号区（含⭐ 2B50）
+def is_emoji(char: str) -> bool:
+    """判断字符是否为emoji"""
+    code = ord(char)
+    # Emoji常见Unicode范围
     return (
-        0x1F000 <= cp <= 0x1FAFF or
-        0x2600 <= cp <= 0x27BF or
-        0x2300 <= cp <= 0x23FF or
-        0x2B00 <= cp <= 0x2BFF
+        0x1F300 <= code <= 0x1F9FF or  # 常见表情符号
+        0x2600 <= code <= 0x27BF or    # 杂项符号
+        0x1F000 <= code <= 0x1F02F or  # 麻将牌等
+        0xFE00 <= code <= 0xFE0F or    # 变体选择器
+        0x1F200 <= code <= 0x1F251 or  # 方框符号
+        0x1F600 <= code <= 0x1F64F or  # 表情符号
+        0x1FA00 <= code <= 0x1FA6F or  # 扩展表情
+        0x2700 <= code <= 0x27BF       # 装饰符号
     )
-
-def is_emoji_char(ch: str) -> bool:
-    cp = ord(ch)
-    return is_emoji_base(cp) or cp in (ZWJ, VS16) or is_skin_tone(cp) or is_regional_indicator(cp)
-
-def iter_emoji_clusters(s: str):
-    """
-    把字符串拆成 cluster（尽量贴近现实 emoji 组合规则）：
-    - 单 emoji
-    - emoji + VS16
-    - emoji + skin tone
-    - ZWJ 连接的组合
-    - 区旗（regional indicators）
-    """
-    i = 0
-    n = len(s)
-    while i < n:
-        ch = s[i]
-        cp = ord(ch)
-
-        if not is_emoji_base(cp):
-            yield ch, False
-            i += 1
-            continue
-
-        cluster = ch
-        i += 1
-
-        while i < n:
-            nxt = s[i]
-            ncp = ord(nxt)
-
-            if ncp == VS16 or is_skin_tone(ncp):
-                cluster += nxt
-                i += 1
-                continue
-
-            if ncp == ZWJ:
-                if i + 1 < n:
-                    cluster += nxt + s[i + 1]
-                    i += 2
-                    continue
-                else:
-                    cluster += nxt
-                    i += 1
-                    continue
-
-            if is_regional_indicator(ncp) and is_regional_indicator(ord(cluster[-1])):
-                cluster += nxt
-                i += 1
-                continue
-
-            break
-
-        yield cluster, True
-
-
-def emoji_cluster_to_filename(cluster: str) -> str:
-    """
-    Twemoji/OpenMoji 常用命名：codepoints 用 '-' 连接，去掉 VS16。
-    例：⭐ U+2B50 -> "2b50.png"
-        👨‍👩‍👧‍👦 -> "1f468-200d-1f469-200d-1f467-200d-1f466.png"
-    """
-    cps = []
-    for ch in cluster:
-        cp = ord(ch)
-        if cp == VS16:
-            continue
-        cps.append(cp)
-    return "-".join(f"{cp:x}" for cp in cps) + ".png"
-
-
-# ---------------- Twemoji CDN 下载与缓存 ----------------
-
-TWEMOJI_BASE = "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/"
-
-def download_emoji_png(
-    url: str,
-    save_path: str,
-    timeout: float = 6.0,
-    retries: int = 2,
-    backoff: float = 0.25
-) -> Optional[Image.Image]:
-    """
-    从网络下载 emoji PNG，保存到本地并返回 PIL Image。
-    retries 为重试次数（失败后会重试）。
-    失败则返回 None，不抛异常。
-    """
-    last_err = None
-    for attempt in range(retries + 1):
-        try:
-            req = urllib.request.Request(
-                url,
-                headers={"User-Agent": "Mozilla/5.0 (emoji-downloader)"}
-            )
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                data = resp.read()
-
-            im = Image.open(BytesIO(data)).convert("RGBA")
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            im.save(save_path, format="PNG")
-            return im
-
-        except (HTTPError, URLError, OSError, ValueError) as e:
-            last_err = e
-            if attempt < retries:
-                time.sleep(backoff * (attempt + 1))
-            else:
-                print(f"[emoji] download failed: {url} -> {e}")
-                return None
-
-    return None
-
-
-# ---------------- 主绘制函数 ----------------
 
 def draw_text_auto(
     image_source: Union[str, Image.Image],
@@ -197,14 +90,20 @@ def draw_text_auto(
     emoji_enabled=True 时：emoji 用 PNG inline 彩色贴图（本地无则自动下载并缓存）。
     emoji_enabled=False 时：所有字符都按普通文字渲染，不下载 emoji。
     中括号及括号内文字使用 bracket_color。
+    支持彩色emoji表情显示。
     """
 
     if isinstance(image_source, Image.Image):
         img = image_source.copy()
     else:
         img = Image.open(image_source).convert("RGBA")
-
-    draw = ImageDraw.Draw(img)
+    
+    # 创建Pilmoji对象用于彩色emoji
+    if PILMOJI_AVAILABLE:
+        pilmoji = Pilmoji(img)
+        draw = pilmoji  # 使用pilmoji替代draw
+    else:
+        draw = ImageDraw.Draw(img)
 
     if image_overlay is not None:
         if isinstance(image_overlay, Image.Image):
@@ -272,28 +171,10 @@ def draw_text_auto(
         except Exception:
             return ImageFont.load_default()
 
-
-    # ----------- 测宽/换行（根据 emoji_enabled 选择逻辑） -----------
-    def emoji_advance_px(font_main: ImageFont.FreeTypeFont) -> int:
-        ascent, descent = font_main.getmetrics()
-        line_px = ascent + descent
-        return max(1, int(line_px * emoji_scale))
-
-    def text_width(txt: str, font_main: ImageFont.FreeTypeFont) -> float:
-        if not emoji_enabled:
-            return draw.textlength(txt, font=font_main)
-
-        w = 0.0
-        em_px = emoji_advance_px(font_main)
-        for cluster, is_em in iter_emoji_clusters(txt):
-            if is_em:
-                w += em_px
-            else:
-                w += draw.textlength(cluster, font=font_main)
-        return w
-
-    def wrap_lines(txt: str, font_main: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
+    # --- 3. 文本包行 (使用pilmoji的textsize) ---
+    def wrap_lines(txt: str, font: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
         lines: list[str] = []
+        
         for para in txt.splitlines() or [""]:
             has_space = (" " in para)
             units = para.split(" ") if has_space else list(para)
@@ -306,7 +187,14 @@ def draw_text_auto(
 
             for u in units:
                 trial = unit_join(buf, u)
-                w = text_width(trial, font_main)
+                # 使用pilmoji计算宽度
+                if PILMOJI_AVAILABLE:
+                    w = pilmoji.getsize(trial, font=font)[0]
+                else:
+                    # 回退到普通draw
+                    temp_draw = ImageDraw.Draw(img)
+                    w = temp_draw.textlength(trial, font=font)
+                
                 if w <= max_w:
                     buf = trial
                 else:
@@ -316,7 +204,12 @@ def draw_text_auto(
                     if has_space and len(u) > 1:
                         tmp = ""
                         for ch in u:
-                            if text_width(tmp + ch, font_main) <= max_w:
+                            if PILMOJI_AVAILABLE:
+                                tmp_w = pilmoji.getsize(tmp + ch, font=font)[0]
+                            else:
+                                temp_draw = ImageDraw.Draw(img)
+                                tmp_w = temp_draw.textlength(tmp + ch, font=font)
+                            if tmp_w <= max_w:
                                 tmp += ch
                             else:
                                 if tmp:
@@ -324,7 +217,12 @@ def draw_text_auto(
                                 tmp = ch
                         buf = tmp
                     else:
-                        if text_width(u, font_main) <= max_w:
+                        if PILMOJI_AVAILABLE:
+                            u_w = pilmoji.getsize(u, font=font)[0]
+                        else:
+                            temp_draw = ImageDraw.Draw(img)
+                            u_w = temp_draw.textlength(u, font=font)
+                        if u_w <= max_w:
                             buf = u
                         else:
                             lines.append(u)
@@ -339,8 +237,14 @@ def draw_text_auto(
         ascent, descent = font_main.getmetrics()
         line_h = int((ascent + descent) * (1 + line_spacing))
         max_w = 0
+        
         for ln in lines:
-            max_w = max(max_w, int(text_width(ln, font_main)))
+            if PILMOJI_AVAILABLE:
+                w = pilmoji.getsize(ln, font=font)[0]
+            else:
+                temp_draw = ImageDraw.Draw(img)
+                w = temp_draw.textlength(ln, font=font)
+            max_w = max(max_w, int(w))
         total_h = max(line_h * max(1, len(lines)), 1)
         return max_w, total_h, line_h
 
@@ -371,10 +275,9 @@ def draw_text_auto(
     em_px = emoji_advance_px(font_main)
     ascent, descent = font_main.getmetrics()
 
-
-    # ----------- 解析中括号着色 -----------
-    def parse_color_segments(s: str, in_bracket: bool):
-        segs = []
+    # --- 6. 解析着色片段 ---
+    def parse_color_segments(s: str, in_bracket: bool) -> Tuple[list[tuple[str, Tuple[int, int, int]]], bool]:
+        segs: list[tuple[str, Tuple[int, int, int]]] = []
         buf = ""
         for ch in s:
             if ch in ("[", "【"):
@@ -395,7 +298,6 @@ def draw_text_auto(
             segs.append((buf, bracket_color if in_bracket else color))
         return segs, in_bracket
 
-
     # ----------- 垂直对齐 -----------
     if valign == "top":
         y_start = y1
@@ -404,55 +306,43 @@ def draw_text_auto(
     else:
         y_start = y2 - best_block_h
 
-
-    # ----------- 绘制 -----------
+    # --- 8. 绘制 (支持彩色emoji) ---
     y = y_start
     in_bracket = False
-    shadow_offset = (4, 4)
-
+    
     for ln in best_lines:
-        line_w = int(text_width(ln, font_main))
-
+        # 计算行宽
+        if PILMOJI_AVAILABLE:
+            line_w = pilmoji.getsize(ln, font=font)[0]
+        else:
+            temp_draw = ImageDraw.Draw(img)
+            line_w = int(temp_draw.textlength(ln, font=font))
+        
         if align == "left":
             x = x1
         elif align == "center":
             x = x1 + (region_w - line_w) // 2
         else:
             x = x2 - line_w
-
+        
         segments, in_bracket = parse_color_segments(ln, in_bracket)
-
+        
         for seg_text, seg_color in segments:
-            if not emoji_enabled:
-                # 不启用 emoji：整段直接画
-                draw.text((x + shadow_offset[0], y + shadow_offset[1]),
-                          seg_text, font=font_main, fill=(0,0,0))
-                draw.text((x, y), seg_text, font=font_main, fill=seg_color)
-                x += int(draw.textlength(seg_text, font=font_main))
-                continue
-
-            # 启用 emoji：逐 cluster 画
-            for cluster, is_em in iter_emoji_clusters(seg_text):
-                if is_em:
-                    em_img = _load_emoji_png(cluster)
-                    if em_img is None:
-                        draw.text((x, y), "□", font=font_main, fill=seg_color)
-                        x += int(draw.textlength("□", font=font_main))
-                        continue
-
-                    em_draw = em_img.resize((em_px, em_px), Image.Resampling.LANCZOS)
-                    em_y = y + ascent - em_px
-
-                    img.paste(em_draw, (x + shadow_offset[0], em_y + shadow_offset[1]), em_draw)
-                    img.paste(em_draw, (x, em_y), em_draw)
-
-                    x += em_px
+            if seg_text:
+                if PILMOJI_AVAILABLE:
+                    # 使用pilmoji绘制彩色emoji
+                    # 先绘制阴影
+                    pilmoji.text((x+4, y+4), seg_text, font=font, fill=(0,0,0), emoji_position_offset=(0, 0))
+                    # 绘制主文字
+                    pilmoji.text((x, y), seg_text, font=font, fill=seg_color, emoji_position_offset=(0, 0))
+                    x += pilmoji.getsize(seg_text, font=font)[0]
                 else:
-                    draw.text((x + shadow_offset[0], y + shadow_offset[1]),
-                              cluster, font=font_main, fill=(0, 0, 0))
-                    draw.text((x, y), cluster, font=font_main, fill=seg_color)
-                    x += int(draw.textlength(cluster, font=font_main))
-
+                    # 回退到普通绘制
+                    temp_draw = ImageDraw.Draw(img)
+                    temp_draw.text((x+4, y+4), seg_text, font=font, fill=(0,0,0))
+                    temp_draw.text((x, y), seg_text, font=font, fill=seg_color)
+                    x += int(temp_draw.textlength(seg_text, font=font))
+        
         y += best_line_h
         if y - y_start > region_h:
             break
@@ -464,26 +354,31 @@ def draw_text_auto(
     elif image_overlay is not None and img_overlay is None:
         print("Warning: overlay image is not exist.")
 
-
-    # 角色专属文字
+    # 自动在图片上写角色专属文字
     if text_configs_dict and role_name in text_configs_dict:
-        shadow_offset2 = (2, 2)
-        shadow_color2 = (0, 0, 0)
+        # 重新创建普通draw对象用于绘制角色名字
+        regular_draw = ImageDraw.Draw(img)
+        shadow_offset = (2, 2)
+        shadow_color = (0, 0, 0)
+        
         for config in text_configs_dict[role_name]:
-            t = config["text"]
+            char_text = config["text"]
             position = config["position"]
             font_color = config["font_color"]
             font_size = config["font_size"]
-
-            font_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "font3.ttf")
-            font2 = ImageFont.truetype(font_path2, font_size)
-
-            shadow_position = (position[0] + shadow_offset2[0], position[1] + shadow_offset2[1])
-            draw.text(shadow_position, t, fill=shadow_color2, font=font2)
-            draw.text(position, t, fill=font_color, font=font2)
-
+        
+            # 使用 get_resource_path 获取字体文件路径
+            font_path_char = get_resource_path("font3.ttf")
+            char_font = ImageFont.truetype(font_path_char, font_size)
+            
+            shadow_position = (position[0] + shadow_offset[0], position[1] + shadow_offset[1])
+            
+            regular_draw.text(shadow_position, char_text, fill=shadow_color, font=char_font)
+            regular_draw.text(position, char_text, fill=font_color, font=char_font)
+    
     img = compress_image(img)
-
+    
+    # --- 9. 输出 PNG ---
     buf = BytesIO()
     img.save(buf, "png")
     return buf.getvalue()

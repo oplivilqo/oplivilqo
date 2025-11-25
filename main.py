@@ -36,6 +36,8 @@ Ctrl+Tab: 清除图片
 按Tab可清除生成图片，降低占用空间，但清除图片后需重启才能正常使用
 感谢各位的支持
 
+改动说明：
+默认启用窗口白名单，只在微信和QQ等聊天窗口前台时才响应热键，避免误触发
 
 """
 )
@@ -60,6 +62,7 @@ mahoshojo_over = [2339,800]   #文本范围右下角位置
 
 
 
+import sys
 import random
 import time
 import keyboard
@@ -70,14 +73,32 @@ import win32clipboard
 import os
 import re
 import shutil
-
+import threading
+import win32gui
+import win32process
+import psutil
 from text_fit_draw import draw_text_auto
 from image_fit_paste import paste_image_auto
+
+# ===== PyInstaller 资源路径处理函数 =====
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径，兼容开发环境和打包后的环境"""
+    try:
+        # PyInstaller 创建临时文件夹，路径存储在 _MEIPASS 中
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # 开发环境中使用当前文件所在目录
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    return os.path.join(base_path, relative_path)
 
 i = -1
 value_1 = -1
 expression = None
 
+#前台窗口白名单
+windowwhitelist=["TIM.exe","WeChat.exe","Weixin.exe","WeChatApp.exe","QQ.exe"]
+enablewhitelist=True
 # 角色配置字典
 mahoshojo = {
     "ema": {"emotion_count": 8, "font": "font3.ttf"},     # 樱羽艾玛
@@ -208,8 +229,8 @@ def get_current_character():
     return character_list[current_character_index-1]
 
 def get_current_font():
-    # 返回完整的字体文件绝对路径
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), mahoshojo[get_current_character()]["font"])
+    # 使用 get_resource_path 获取字体文件路径
+    return get_resource_path(mahoshojo[get_current_character()]["font"])
 
 def get_current_emotion_count():
     return mahoshojo[get_current_character()]["emotion_count"]
@@ -221,8 +242,6 @@ def delate(folder_path, quality=85):
          
 
 def generate_and_save_images(character_name):
-    now_file = os.path.dirname(os.path.abspath(__file__))
-    
     # 获取当前角色的表情数量
     emotion_count = mahoshojo[character_name]["emotion_count"]
 
@@ -232,9 +251,9 @@ def generate_and_save_images(character_name):
     print("正在加载")
     for i in range(16):     
         for j in range(emotion_count):
-                # 使用绝对路径加载背景图片和角色图片
-            background_path = os.path.join(now_file, "background", f"c{i+1}.png")
-            overlay_path = os.path.join(now_file, character_name, f"{character_name} ({j+1}).png")
+            # 使用 get_resource_path 获取资源路径
+            background_path = get_resource_path(os.path.join("background", f"c{i+1}.png"))
+            overlay_path = get_resource_path(os.path.join(character_name, f"{character_name} ({j+1}).png"))
                 
             background = Image.open(background_path).convert("RGBA")
             overlay = Image.open(overlay_path).convert("RGBA")
@@ -243,8 +262,8 @@ def generate_and_save_images(character_name):
             result = background.copy()
             result.paste(overlay, (0, 134), overlay)
                 
-                # 使用绝对路径保存生成的图片
-            save_path = os.path.join(os.path.join(magic_cut_folder), f"{character_name} ({img_num}).jpg")
+            # 使用绝对路径保存生成的图片
+            save_path = os.path.join(magic_cut_folder, f"{character_name} ({img_num}).jpg")
             result.convert("RGB").save(save_path)
     print("加载完成")
 
@@ -326,19 +345,19 @@ def get_random_value():
 
 HOTKEY= "enter"
 
-# 全选快捷键, 此按键并不会监听, 而是会作为模拟输入
+# 全选快捷键, 此按键并不会监听,  而是会作为模拟输入
 # 此值为字符串, 代表热键的键名, 格式同 HOTKEY
 SELECT_ALL_HOTKEY= "ctrl+a"
 
-# 剪切快捷键, 此按键并不会监听, 而是会作为模拟输入
+# 剪切快捷键, 此按键并不会监听,  而是会作为模拟输入
 # 此值为字符串, 代表热键的键名, 格式同 HOTKEY
 CUT_HOTKEY= "ctrl+x"
 
-# 黏贴快捷键, 此按键并不会监听, 而是会作为模拟输入
+# 黏贴快捷键, 此按键并不会监听,  而是会作为模拟输入
 # 此值为字符串, 代表热键的键名, 格式同 HOTKEY
 PASTE_HOTKEY= "ctrl+v"
 
-# 发送消息快捷键, 此按键并不会监听, 而是会作为模拟输入
+# 发送消息快捷键, 此按键并不会监听,  而是会作为模拟输入
 # 此值为字符串, 代表热键的键名, 格式同 HOTKEY
 SEND_HOTKEY= "enter"
 
@@ -374,6 +393,17 @@ def copy_png_bytes_to_clipboard(png_bytes: bytes):
     win32clipboard.SetClipboardData(win32clipboard.CF_DIB, bmp_data)
     win32clipboard.CloseClipboard()
 
+#判断窗口名
+def get_window_exe_name():
+    try:
+        hwnd=win32gui.GetForegroundWindow()
+        _,pid=win32process.GetWindowThreadProcessId(hwnd)
+        process=psutil.Process(pid)
+        exe_path=process.exe()
+        return os.path.basename(exe_path)
+    except Exception as e:
+        print(f"获取文件名时发生错误：{e}")
+        return None
 
 def cut_all_and_get_text() -> str:
     """
@@ -422,6 +452,21 @@ def try_get_image() -> Image.Image | None:
             pass
     return None
 
+def perform_keyboard_actions(png_bytes):
+    """在主线程中执行所有键盘操作"""
+    if png_bytes is None:
+        print("Generate image failed!")
+        return
+    
+    copy_png_bytes_to_clipboard(png_bytes)
+    
+    if AUTO_PASTE_IMAGE:
+        # 使用 call_later 确保 send 在 keyboard 自己的线程中运行
+        keyboard.call_later(lambda: keyboard.send(PASTE_HOTKEY), delay=0.1)
+
+        if AUTO_SEND_IMAGE:
+            keyboard.call_later(lambda: keyboard.send(SEND_HOTKEY), delay=0.4) # 增加延迟以确保粘贴完成
+
 def Start():
     print("Start generate...")
     
@@ -438,11 +483,14 @@ def Start():
 # 文本框右下角坐标 (x, y), 同时适用于图片框
 # 此值为一个二元组, 例如 (100, 150), 单位像素, 图片的左上角记为 (0, 0)
     IMAGE_BOX_BOTTOMRIGHT= (mahoshojo_over[0], mahoshojo_over[1])
-    text=cut_all_and_get_text()
+    
+    text = pyperclip.paste() # 暂时从剪贴板获取，而不是模拟按键
     image=try_get_image()
 
     if text == "" and image is None:
         print("no text or image")
+        # 即使没有文本/图像，也调用回调以确保线程安全
+        keyboard.call_later(perform_keyboard_actions, args=[None])
         return
     
     png_bytes=None
@@ -466,6 +514,7 @@ def Start():
                 )
         except Exception as e:
             print("Generate image failed:", e)
+            keyboard.call_later(perform_keyboard_actions, args=[None])
             return
     
     elif text != "":
@@ -501,21 +550,25 @@ def Start():
 
         except Exception as e:
             print("Generate image failed:", e)
+            keyboard.call_later(perform_keyboard_actions, args=[None])
             return
         
-    if png_bytes is None:
-        print("Generate image failed!")
+    # 将 png_bytes 传递给主线程的 perform_keyboard_actions
+    keyboard.call_later(perform_keyboard_actions, args=[png_bytes])
+
+
+def run_start_in_thread():
+    if enablewhitelist and get_window_exe_name() not in windowwhitelist:
+        print("当前窗口不在白名单内")
+        keyboard.send(HOTKEY)
         return
+    # 1. 在主线程（keyboard线程）中安全地剪切文本
+    text = cut_all_and_get_text()
     
-    copy_png_bytes_to_clipboard(png_bytes)
-    
-    if AUTO_PASTE_IMAGE:
-        keyboard.send(PASTE_HOTKEY)
-
-        time.sleep(0.3)
-
-        if AUTO_SEND_IMAGE:
-            keyboard.send(SEND_HOTKEY)
+    # 2. 在后台线程中运行耗时的图像处理
+    # 将获取的文本作为参数传递给 Start 函数（需要修改Start函数以接受它）
+    # 但为了简化，我们依赖于剪贴板，因为 cut_all_and_get_text 已经更新了它
+    threading.Thread(target=Start).start()
 
 # 角色切换快捷键绑定
 # 按Ctrl+1 到 Ctrl+9: 切换角色1-9
@@ -534,7 +587,7 @@ for i in range(1,10):
     keyboard.add_hotkey(f'alt+{i}', lambda idx=i: get_expression(idx))
 
 # 绑定 Ctrl+Alt+H 作为全局热键
-ok=keyboard.add_hotkey(HOTKEY,Start, suppress=BLOCK_HOTKEY or HOTKEY==SEND_HOTKEY)
+ok=keyboard.add_hotkey(HOTKEY,run_start_in_thread, suppress=BLOCK_HOTKEY or HOTKEY==SEND_HOTKEY)
 
 # 绑定Ctrl+0显示当前角色
 keyboard.add_hotkey('ctrl+0', show_current_character)

@@ -53,6 +53,7 @@ class ManosabaTextBox:
         self.mahoshojo = {}  # 角色元数据
         self.text_configs_dict = {}  # 文本配置字典
         self.character_list = []  # 角色列表
+        self.keymap = {}    # 快捷键映射
         self.load_configs()
 
         # 状态变量
@@ -73,12 +74,15 @@ class ManosabaTextBox:
         with open(os.path.join(self.CONFIG_PATH, "chara_meta.yml"), 'r', encoding="utf-8") as fp:
             config = yaml.safe_load(fp)
             self.mahoshojo = config["mahoshojo"]
+            self.character_list = list(self.mahoshojo.keys())
 
         with open(os.path.join(self.CONFIG_PATH, "text_configs.yml"), 'r', encoding="utf-8") as fp:
             config = yaml.safe_load(fp)
             self.text_configs_dict = config["text_configs"]
 
-        self.character_list = list(self.mahoshojo.keys())
+        with open(os.path.join(self.CONFIG_PATH, "keymap.yml"), 'r', encoding="utf-8") as fp:
+            config = yaml.safe_load(fp)
+            self.keymap = config.get(PLATFORM, {})
 
     def get_character(self, index: str | None = None, full_name: bool = False) -> str:
         """
@@ -365,12 +369,10 @@ class ManosabaTUI(App):
               'r',encoding="utf-8") as f:
         CSS = f.read()
 
-    BINDINGS = [
-        Binding("ctrl+e", "generate", "生成图片", priority=True),
-        Binding("ctrl+d", "delete_cache", "清除缓存", priority=True),
-        Binding("ctrl+q", "quit", "退出", priority=True),
-        Binding("ctrl+r", "pause", "暂停", priority=True),
-    ]
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "keymap.yml"),
+        'r',encoding="utf-8") as f:
+        keymap = yaml.safe_load(f).get(PLATFORM, {})
+
 
     TITLE = "魔裁 文本框生成器"
     theme = "tokyo-night"
@@ -378,6 +380,13 @@ class ManosabaTUI(App):
     current_character = reactive("sherri")
     current_emotion = reactive(1)
     status_msg = reactive("就绪")
+
+    BINDINGS = [
+        Binding(keymap['start_generate'], "generate", "生成图片", priority=True),
+        Binding(keymap['delete_cache'], "delete_cache", "清除缓存", priority=True),
+        Binding(keymap['quit'], "quit", "退出", priority=True),
+        Binding(keymap['pause'], "pause", "暂停", priority=True),
+    ]
 
     def __init__(self):
         super().__init__()
@@ -389,15 +398,18 @@ class ManosabaTUI(App):
 
     def setup_global_hotkeys(self) -> None:
         """设置全局热键监听器"""
+        keymap = self.keymap
         if PLATFORM == "darwin":
             hotkeys = {
-                '<ctrl>+<enter>': self.trigger_generate
+                keymap['start_generate']: self.trigger_generate
             }
 
             self.hotkey_listener = GlobalHotKeys(hotkeys)
             self.hotkey_listener.start()
         elif PLATFORM.startswith('win'):
-            keyboard.add_hotkey('ctrl+e', self.trigger_generate)
+            keyboard.add_hotkey(keymap['start_generate'], self.trigger_generate)
+
+
 
     def trigger_generate(self) -> None:
         """全局热键触发生成图片（在后台线程中调用）"""

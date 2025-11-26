@@ -42,7 +42,6 @@ def draw_text_auto(
     align: Align = "center",
     valign: VAlign = "middle",
     line_spacing: float = 0.15,
-    bracket_color: Tuple[int, int, int] = (249,89,94),  # 中括号及内部内容颜色
     image_overlay: Union[str, Image.Image,None]=None,
     role_name: str = "unknown",  # 添加角色名称参数
     text_configs_dict: dict = None,  # 添加文字配置字典参数
@@ -51,7 +50,7 @@ def draw_text_auto(
     在指定矩形内自适应字号绘制文本；
     中括号及括号内文字使用 bracket_color。
     """
-
+    bracket_color = text_configs_dict[role_name][0]["font_color"]
     # --- 1. 打开图像 ---
     if isinstance(image_source, Image.Image):
         img = image_source.copy()

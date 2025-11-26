@@ -17,7 +17,7 @@ from text_fit_draw import draw_text_auto
 from image_fit_paste import paste_image_auto
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, RadioSet, RadioButton, Label, ProgressBar
+from textual.widgets import Header, Footer, RadioSet, RadioButton, Label, ProgressBar, Switch, Static
 from textual.binding import Binding
 from textual.reactive import reactive
 
@@ -33,6 +33,7 @@ if PLATFORM.startswith('win'):
 
 
 class ManosabaTextBox:
+    """主逻辑类"""
     def __init__(self):
         # 常量定义
         self.BOX_RECT = ((728, 355), (2339, 800))  # 文本框区域坐标
@@ -446,6 +447,11 @@ class ManosabaTUI(App):
                                     value=(i == 1),
                                     id=f"emotion_{i}"
                                 )
+                with Vertical(id="switch_panel"):
+                    yield Label("自动粘贴: ", classes="switch_label")
+                    yield Switch(value=self.textbox.AUTO_PASTE_IMAGE, id="auto_paste_switch")
+                    yield Label("自动发送: ", classes="switch_label")
+                    yield Switch(value=self.textbox.AUTO_SEND_IMAGE, id="auto_send_switch")
 
             with Horizontal(id="control_panel"):
                 yield Label(self.status_msg, id="status_label")
@@ -502,6 +508,23 @@ class ManosabaTUI(App):
         """更新进度条"""
         progress_bar = self.query_one("#progress_bar", ProgressBar)
         progress_bar.update(total=total, progress=current)
+
+    def on_switch_changed(self, event: Switch.Changed) -> None:
+        """当Switch状态改变时"""
+        if event.switch.id == "auto_paste_switch":
+            self.textbox.AUTO_PASTE_IMAGE = event.value
+            self.update_status("自动粘贴已" + ("启用" if event.value else "禁用"))
+            auto_send_switch = self.query_one("#auto_send_switch", Switch)
+            if event.value==False:
+                self.textbox.AUTO_SEND_IMAGE = False
+                auto_send_switch.value = False
+                auto_send_switch.disabled = True
+            else:
+                self.textbox.AUTO_SEND_IMAGE = True
+                auto_send_switch.disabled = False
+        elif event.switch.id == "auto_send_switch":
+            self.textbox.AUTO_SEND_IMAGE = event.value
+            self.update_status("自动发送已" + ("启用" if event.value else "禁用"))
 
     def _disable_radio_sets(self) -> None:
         """禁用所有RadioSet"""

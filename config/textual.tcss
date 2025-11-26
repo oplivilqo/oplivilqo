@@ -9,15 +9,16 @@ Screen {
 }
 
 #character_panel {
-    width: 1fr;
-    height: 100%;
     padding: 1;
 }
 
 #emotion_panel {
-    width: 1fr;
-    height: 100%;
     padding: 1;
+}
+
+#switch_panel {
+    padding: 1;
+    width: auto;
 }
 
 #control_panel {
@@ -50,4 +51,9 @@ RadioSet {
 
 #progress_bar.visible {
     display: block;
+}
+
+.switch_label {
+    color: $foreground;
+    margin-top: 1;
 }

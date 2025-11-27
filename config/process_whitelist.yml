@@ -10,5 +10,5 @@ win32:
 
 # macOS
 darwin:
-  - QQ.app
-  - WeChat.app
+  - QQ
+  - WeChat

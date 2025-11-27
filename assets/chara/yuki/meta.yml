@@ -1,0 +1,19 @@
+full_name: 月代雪
+font: font3.ttf
+text_config:
+  - text: 月
+    position: [ 759, 63 ]
+    font_color: [ 195, 209, 231 ]
+    font_size: 196
+  - text: 代
+    position: [ 948, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 雪
+    position: [ 1053, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: ""
+    position: [ 0, 0 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 1

@@ -1,0 +1,19 @@
+full_name: 黑部奈叶香
+font: font3.ttf
+text_config:
+  - text: 黑
+    position: [ 759, 63 ]
+    font_color: [ 131, 143, 147 ]
+    font_size: 196
+  - text: 部
+    position: [ 955, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 奈
+    position: [ 1053, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 叶香
+    position: [ 1197, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92

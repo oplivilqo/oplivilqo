@@ -1,0 +1,19 @@
+full_name: 莲见蕾雅
+font: font3.ttf
+text_config:
+  - text: 莲
+    position: [ 759, 73 ]
+    font_color: [ 253, 177, 88 ]
+    font_size: 186
+  - text: 见
+    position: [ 945, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 蕾
+    position: [ 1042, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 雅
+    position: [ 1186, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92

@@ -72,21 +72,65 @@ class ManosabaTextBox:
         self.CACHE_PATH = os.path.join(self.ASSETS_PATH, "cache")
         os.makedirs(self.CACHE_PATH, exist_ok=True)
 
+    def load_chara_meta(self):
+        """从各个角色文件夹中的meta.yml加载配置"""
+        chara_base_path = os.path.join(self.ASSETS_PATH, "chara")
+        if not os.path.exists(chara_base_path):
+            print("[red]错误: 角色文件夹不存在[/red]")
+            return
+
+        for chara_name in os.listdir(chara_base_path):
+            chara_dir = os.path.join(chara_base_path, chara_name)
+            if not os.path.isdir(chara_dir):
+                continue
+            meta_file = os.path.join(chara_dir, "meta.yml")
+
+            # 如果meta.yml不存在，跳过该角色
+            if not os.path.exists(meta_file):
+                print(f"[yellow]警告: {chara_name} 文件夹中没有 meta.yml，已跳过[/yellow]")
+                continue
+
+            try:
+                with open(meta_file, 'r', encoding="utf-8") as fp:
+                    meta = yaml.safe_load(fp)
+
+                    # 验证必需字段
+                    if not all(key in meta for key in ['full_name', 'font']):
+                        print(f"[yellow]警告: {chara_name} 的 meta.yml 缺少必需字段，已跳过[/yellow]")
+                        continue
+
+                    # 自动检测角色文件夹中的PNG图片数量
+                    png_files = [f for f in os.listdir(chara_dir) if f.lower().endswith('.png')]
+                    emotion_cnt = len(png_files)
+                    if emotion_cnt == 0:
+                        print(f"[yellow]警告: {chara_name} 文件夹中没有PNG图片，已跳过[/yellow]")
+                        continue
+                    meta['emotion_count'] = emotion_cnt
+                    self.mahoshojo[chara_name] = meta
+
+            except Exception as e:
+                print(f"[yellow]警告: 加载 {chara_name} 的 meta.yml 失败: {e}[/yellow]")
+                continue
+
+        self.character_list = list(self.mahoshojo.keys())
+
+        # 将text_config从mahoshojo中提取到text_configs_dict
+        self.text_configs_dict = {}
+        for chara_name, meta in self.mahoshojo.items():
+            if 'text_config' in meta:
+                self.text_configs_dict[chara_name] = meta['text_config']
+
     def load_configs(self):
         """从yaml加载配置文件"""
-        with open(os.path.join(self.CONFIG_PATH, "chara_meta.yml"), 'r', encoding="utf-8") as fp:
-            config = yaml.safe_load(fp)
-            self.mahoshojo = config["mahoshojo"]
-            self.character_list = list(self.mahoshojo.keys())
+        # 加载角色配置
+        self.load_chara_meta()
 
-        with open(os.path.join(self.CONFIG_PATH, "text_configs.yml"), 'r', encoding="utf-8") as fp:
-            config = yaml.safe_load(fp)
-            self.text_configs_dict = config["text_configs"]
-
+        # 加载快捷键配置
         with open(os.path.join(self.CONFIG_PATH, "keymap.yml"), 'r', encoding="utf-8") as fp:
             config = yaml.safe_load(fp)
             self.keymap = config.get(PLATFORM, {})
 
+        # 加载进程白名单
         with open(os.path.join(self.CONFIG_PATH, "process_whitelist.yml"), 'r', encoding="utf-8") as fp:
             config = yaml.safe_load(fp)
             self.process_whitelist = config.get(PLATFORM, [])

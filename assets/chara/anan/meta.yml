@@ -1,0 +1,19 @@
+full_name: 夏目安安
+font: font3.ttf
+text_config:
+  - text: 夏
+    position: [ 759, 73 ]
+    font_color: [ 159, 145, 251 ]
+    font_size: 186
+  - text: 目
+    position: [ 949, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 安
+    position: [ 1039, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 安
+    position: [ 1183, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92

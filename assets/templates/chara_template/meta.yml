@@ -1,0 +1,25 @@
+## 在修改本文件之前，请先将文件夹名更改为角色的ID（英文、数字、下划线组成）
+
+# 自定义角色模版配置文件
+# 新角色信息，依次为全名、使用的字体
+full_name: 典狱长
+font: font3.ttf
+# 新角色的文字配置（对话框上方角色的名字显示）
+# 依次为文字内容、位置（x, y）、字体颜色（R, G, B）、字体大小
+text_config:
+  - text: 典
+    position: [ 759, 63 ]
+    font_color: [ 195, 209, 231 ]
+    font_size: 196
+  - text: 狱
+    position: [ 948, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 长
+    position: [ 1053, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: ""
+    position: [ 0, 0 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 1

@@ -1,0 +1,19 @@
+full_name: 紫藤亚里沙
+font: font3.ttf
+text_config:
+  - text: 紫
+    position: [ 759, 73 ]
+    font_color: [ 235, 75, 60 ]
+    font_size: 186
+  - text: 藤
+    position: [ 945, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 亚
+    position: [ 1042, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 里沙
+    position: [ 1186, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92

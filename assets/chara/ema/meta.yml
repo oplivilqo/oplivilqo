@@ -1,0 +1,19 @@
+full_name: 樱羽艾玛
+font: font3.ttf
+text_config:
+  - text: 樱
+    position: [ 759, 73 ]
+    font_color: [ 253, 145, 175 ]
+    font_size: 186
+  - text: 羽
+    position: [ 949, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 艾
+    position: [ 1039, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 玛
+    position: [ 1183, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92

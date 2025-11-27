@@ -1,0 +1,20 @@
+full_name: 橘雪莉
+emotion_count: 7
+font: font3.ttf
+text_config:
+  - text: 橘
+    position: [ 759, 73 ]
+    font_color: [ 137, 177, 251 ]
+    font_size: 186
+  - text: 雪
+    position: [ 943, 110 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 莉
+    position: [ 1093, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: ""
+    position: [ 0, 0 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 1

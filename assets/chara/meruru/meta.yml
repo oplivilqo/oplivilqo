@@ -1,0 +1,19 @@
+full_name: 冰上梅露露
+font: font3.ttf
+text_config:
+  - text: 冰
+    position: [ 759, 73 ]
+    font_color: [ 227, 185, 175 ]
+    font_size: 186
+  - text: 上
+    position: [ 945, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 梅
+    position: [ 1042, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 露露
+    position: [ 1186, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92

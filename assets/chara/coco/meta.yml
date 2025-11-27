@@ -1,0 +1,19 @@
+full_name: 泽渡可可
+font: font3.ttf
+text_config:
+  - text: 泽
+    position: [ 759, 73 ]
+    font_color: [ 251, 114, 78 ]
+    font_size: 186
+  - text: 渡
+    position: [ 945, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 可
+    position: [ 1042, 117 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 可
+    position: [ 1186, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92

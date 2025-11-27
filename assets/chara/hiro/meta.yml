@@ -1,0 +1,19 @@
+full_name: 二阶堂希罗
+font: font3.ttf
+text_config:
+  - text: 二
+    position: [ 759, 63 ]
+    font_color: [ 239, 79, 84 ]
+    font_size: 196
+  - text: 阶堂
+    position: [ 955, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92
+  - text: 希
+    position: [ 1143, 110 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 147
+  - text: 罗
+    position: [ 1283, 175 ]
+    font_color: [ 255, 255, 255 ]
+    font_size: 92

@@ -47,6 +47,7 @@ def draw_text_auto(
     role_name: str = "unknown",  # 添加角色名称参数
     text_configs_dict: dict = None,  # 添加文字配置字典参数
     base_path: str = None,  # 添加基础路径参数
+    overlay_offset: Tuple[int, int] = (0, 0),  # 添加覆盖图偏移参数
 ) -> bytes:
     """
     在指定矩形内自适应字号绘制文本；
@@ -246,9 +247,10 @@ def draw_text_auto(
         if y - y_start > region_h:
             break
 
-    # 覆盖置顶图层（如果有）
+    # 覆盖置顶图层（如果有）- 应用偏移
     if image_overlay is not None and img_overlay is not None:
-        img.paste(img_overlay, (0, 0), img_overlay)
+        offset_x, offset_y = overlay_offset
+        img.paste(img_overlay, (offset_x, offset_y), img_overlay)
     elif image_overlay is not None and img_overlay is None:
         print("Warning: overlay image is not exist.")
 

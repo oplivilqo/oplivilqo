@@ -22,6 +22,7 @@ def paste_image_auto(
     role_name: str = "unknown",  # 添加角色名称参数
     text_configs_dict: dict = None,  # 添加文字配置字典参数
     base_path: str = None,  # 添加基础路径参数
+    overlay_offset: Tuple[int, int] = (0, 0),  # 添加覆盖图偏移参数
 ) -> bytes:
     """
     在指定矩形内放置一张图片（content_image），按比例缩放至"最大但不超过"该矩形。
@@ -112,9 +113,10 @@ def paste_image_auto(
         # 没有 alpha 就直接粘贴（会覆盖底图该区域）
         img.paste(resized, (px, py))
 
-    # 覆盖置顶图层（如果有）
+    # 覆盖置顶图层（如果有）- 应用偏移
     if image_overlay is not None and img_overlay is not None:
-        img.paste(img_overlay, (0, 0), img_overlay)
+        offset_x, offset_y = overlay_offset
+        img.paste(img_overlay, (offset_x, offset_y), img_overlay)
     elif image_overlay is not None and img_overlay is None:
         print("Warning: overlay image is not exist.")
     

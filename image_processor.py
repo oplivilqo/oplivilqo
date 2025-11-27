@@ -43,6 +43,7 @@ class ImageProcessor:
 
                 img_num = j * self.background_count + i + 1
                 result = background.copy()
+                # 使用原始位置 (0, 134)
                 result.paste(overlay, (0, 134), overlay)
 
                 save_path = os.path.join(
@@ -79,6 +80,8 @@ class ImageProcessor:
                 keep_alpha=True,
                 role_name=character_name,
                 text_configs_dict=self.text_configs_dict,
+                base_path=self.base_path,
+                overlay_offset=(0, 134)  # 使用原始位置
             )
         elif text is not None and text != "":
             return draw_text_auto(
@@ -94,35 +97,29 @@ class ImageProcessor:
                 font_path=font_path,
                 role_name=character_name,
                 text_configs_dict=self.text_configs_dict,
+                base_path=self.base_path,
+                overlay_offset=(0, 134)  # 使用原始位置
             )
         else:
             raise ValueError("没有文本或图像内容")
     
-    def generate_preview_image(self, character_name: str, background_index: int = None, 
-                            emotion_index: int = None, preview_size: tuple = (800, 450)) -> Image.Image:
+    def generate_preview_image(self, character_name: str, background_index: int, 
+                             emotion_index: int, preview_size: tuple = (400, 300)) -> Image.Image:
         """生成预览图片"""
         try:
-            # 如果未指定背景，使用随机背景
-            if background_index is None:
-                background_index = self.get_random_background()
-            
-            # 如果未指定表情，使用第一个表情
-            if emotion_index is None:
-                emotion_index = 1
-                
             background_path = os.path.join(self.base_path, 'assets', "background", f"c{background_index}.png")
             overlay_path = os.path.join(self.base_path, 'assets', 'chara', character_name, 
-                                    f"{character_name} ({emotion_index}).png")
+                                       f"{character_name} ({emotion_index}).png")
 
             background = Image.open(background_path).convert("RGBA")
             overlay = Image.open(overlay_path).convert("RGBA")
 
-            # 合成基础图片
+            # 合成基础图片 - 使用原始位置
             result = background.copy()
-            result.paste(overlay, (0, 134), overlay)
+            result.paste(overlay, (0, 134), overlay)  # 使用原始位置
             
             # 调整大小用于预览
-            result = result.resize(preview_size, Image.Resampling.LANCZOS)
+            result.thumbnail(preview_size, Image.Resampling.LANCZOS)
             
             return result
         except Exception as e:

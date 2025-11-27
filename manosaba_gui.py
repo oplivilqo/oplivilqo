@@ -15,11 +15,12 @@ class ManosabaGUI:
         self.core = ManosabaCore()
         self.root = tk.Tk()
         self.root.title("魔裁文本框生成器")
-        self.root.geometry("900x700")
+        self.root.geometry("800x700")
         
         # 预览相关
         self.preview_image = None
         self.preview_photo = None
+        self.preview_size = (400, 300)  # 固定预览大小
         
         # 热键监听
         self.hotkey_listener = None
@@ -110,33 +111,30 @@ class ManosabaGUI:
         ttk.Checkbutton(settings_frame, text="预合成图片", variable=self.pre_compose_var,
                        command=self.on_pre_compose_changed).grid(row=0, column=2, sticky=tk.W, padx=5)
         
-        # 按钮框架
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=4, column=0, columnspan=2, pady=10)
-        
-        ttk.Button(button_frame, text="生成图片", command=self.generate_image).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="清除缓存", command=self.delete_cache).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="更新预览", command=self.update_preview).pack(side=tk.LEFT, padx=5)
-        
-        # 预览框架 - 改为上下布局，宽度与窗口差不多
+        # 预览框架 - 改为上下布局
         preview_frame = ttk.LabelFrame(main_frame, text="预览", padding="5")
-        preview_frame.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        preview_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
         
-        # 预览图片在上 - 使用固定高度，宽度自适应
+        # 预览图片在上 - 使用固定大小的Frame来容纳预览图
         preview_image_frame = ttk.Frame(preview_frame)
-        preview_image_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S), padx=5, pady=5)
+        preview_image_frame.grid(row=0, column=0, padx=5, pady=5, sticky=(tk.W, tk.E))
         
         self.preview_label = ttk.Label(preview_image_frame)
         self.preview_label.pack(expand=True)
         
         # 预览信息在下 - 使用Label而不是Text，节省空间
-        preview_info_frame = ttk.Frame(preview_frame)
-        preview_info_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), padx=5, pady=5)
-        
         self.preview_info_var = tk.StringVar(value="预览信息将显示在这里")
-        preview_info_label = ttk.Label(preview_info_frame, textvariable=self.preview_info_var, 
-                                      wraplength=800, justify=tk.LEFT)
-        preview_info_label.pack(anchor=tk.W)
+        preview_info_label = ttk.Label(preview_frame, textvariable=self.preview_info_var, 
+                                      wraplength=400, justify=tk.LEFT)
+        preview_info_label.grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
+        
+        # 按钮框架
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        
+        ttk.Button(button_frame, text="生成图片", command=self.generate_image).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="清除缓存", command=self.delete_cache).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="更新预览", command=self.update_preview).pack(side=tk.LEFT, padx=5)
         
         # 状态栏
         self.status_var = tk.StringVar(value="就绪")
@@ -147,11 +145,8 @@ class ManosabaGUI:
         main_frame.columnconfigure(1, weight=1)
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
-        main_frame.rowconfigure(5, weight=1)  # 预览行可扩展
+        main_frame.rowconfigure(4, weight=1)
         preview_frame.columnconfigure(0, weight=1)
-        preview_frame.rowconfigure(0, weight=1)  # 图片行可扩展
-        preview_image_frame.columnconfigure(0, weight=1)
-        preview_image_frame.rowconfigure(0, weight=1)
     
     def setup_hotkeys(self):
         """设置全局热键"""
@@ -272,16 +267,7 @@ class ManosabaGUI:
     def update_preview(self):
         """更新预览"""
         try:
-            # 计算预览图大小 - 宽度与窗口差不多，保持16:9比例
-            window_width = self.root.winfo_width()
-            if window_width < 500:  # 最小宽度
-                preview_width = 500
-            else:
-                preview_width = window_width - 100  # 留出边距
-            
-            preview_height = int(preview_width * 9 / 16)  # 16:9 比例
-            
-            preview_image, info = self.core.generate_preview(preview_size=(preview_width, preview_height))
+            preview_image, info = self.core.generate_preview(self.preview_size)
             
             # 转换为 PhotoImage
             self.preview_photo = ImageTk.PhotoImage(preview_image)
@@ -299,7 +285,8 @@ class ManosabaGUI:
         def generate_in_thread():
             result = self.core.generate_image()
             self.root.after(0, self.update_status, result)
-            self.root.after(0, self.update_preview)  # 生成后更新预览
+            # 生成后更新预览，以便显示下一次可能的预览
+            self.root.after(0, self.update_preview)
         
         self.update_status("正在生成图片...")
         thread = threading.Thread(target=generate_in_thread, daemon=True)

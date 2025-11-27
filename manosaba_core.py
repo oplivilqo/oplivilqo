@@ -7,7 +7,7 @@ import threading
 from pynput.keyboard import Key, Controller
 from sys import platform
 import keyboard as kb_module
-from PIL import Image
+import PIL as Image
 
 if platform.startswith('win'):
     try:
@@ -61,6 +61,10 @@ class ManosabaCore:
         self.selected_background = None  # 选择的背景，None表示随机
         self.last_emotion = -1
         self.current_character_index = 3  # 默认第三个角色（sherri）
+        
+        # 预览相关
+        self.preview_emotion = None
+        self.preview_background = None
 
     def load_configs(self):
         """加载所有配置"""
@@ -112,21 +116,25 @@ class ManosabaCore:
         thread = threading.Thread(target=compose_in_thread, daemon=True)
         thread.start()
 
-    def generate_preview(self, preview_size=(300, 200)) -> tuple:
+    def generate_preview(self, preview_size=(400, 300)) -> tuple:
         """生成预览图片和相关信息"""
         character_name = self.get_character()
         emotion_count = self.get_current_emotion_count()
         
         # 确定表情和背景
         if self.selected_emotion is None:
-            emotion_index = random.randint(1, emotion_count)  # 随机选择表情
+            emotion_index = self._get_random_emotion(emotion_count)
         else:
             emotion_index = self.selected_emotion
             
         if self.selected_background is None:
-            background_index = self.image_processor.get_random_background()  # 随机选择背景
+            background_index = self.image_processor.get_random_background()
         else:
             background_index = self.selected_background
+        
+        # 保存预览使用的表情和背景，确保最终图片与预览一致
+        self.preview_emotion = emotion_index
+        self.preview_background = background_index
         
         # 生成预览图片
         preview_image = self.image_processor.generate_preview_image(
@@ -148,7 +156,7 @@ class ManosabaCore:
         else:
             # 避免连续相同表情
             available_emotions = [i for i in range(1, emotion_count + 1) if i != self.last_emotion]
-            emotion_index = random.choice(available_emotions)
+            emotion_index = random.choice(available_emotions) if available_emotions else self.last_emotion
         
         self.last_emotion = emotion_index
         return emotion_index
@@ -224,15 +232,18 @@ class ManosabaCore:
             return "前台应用不在白名单内"
         
         character_name = self.get_character()
-        emotion_count = self.get_current_emotion_count()
         
-        # 确定表情和背景
-        if self.selected_emotion is None:
-            emotion_index = self._get_random_emotion(emotion_count)
+        # 使用预览时确定的表情和背景，确保一致
+        if self.preview_emotion is not None:
+            emotion_index = self.preview_emotion
+        elif self.selected_emotion is None:
+            emotion_index = self._get_random_emotion(self.get_current_emotion_count())
         else:
             emotion_index = self.selected_emotion
             
-        if self.selected_background is None:
+        if self.preview_background is not None:
+            background_index = self.preview_background
+        elif self.selected_background is None:
             background_index = self.image_processor.get_random_background()
         else:
             background_index = self.selected_background
@@ -247,7 +258,7 @@ class ManosabaCore:
         try:
             # 生成图片
             if self.PRE_COMPOSE_IMAGES:
-                png_bytes = self._generate_with_precomposed(character_name, text, image)
+                png_bytes = self._generate_with_precomposed(character_name, text, image, emotion_index, background_index)
             else:
                 png_bytes = self.image_processor.generate_image_directly(
                     character_name, background_index, emotion_index, 
@@ -278,14 +289,10 @@ class ManosabaCore:
 
         return f"成功生成图片！角色: {character_name}, 表情: {emotion_index}, 背景: {background_index}"
 
-    def _generate_with_precomposed(self, character_name: str, text: str, image: Image.Image) -> bytes:
+    def _generate_with_precomposed(self, character_name: str, text: str, image: Image.Image, emotion_index: int, background_index: int) -> bytes:
         """使用预合成图片生成"""
         # 这里需要实现预合成模式的逻辑
-        # 由于时间关系，这里简化实现
-        emotion_count = self.get_current_emotion_count()
-        background_index = self.selected_background or self.image_processor.get_random_background()
-        emotion_index = self.selected_emotion or self._get_random_emotion(emotion_count)
-        
+        # 由于时间关系，这里简化实现，直接调用直接生成方法
         return self.image_processor.generate_image_directly(
             character_name, background_index, emotion_index, 
             text, image, self.get_current_font()

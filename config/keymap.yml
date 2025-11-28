@@ -16,16 +16,6 @@ darwin:
   quit: <ctrl>+q
   start_generate: <ctrl>+enter
   toggle_listener: <alt>+<ctrl>+p
-gui:
-  font_family: font3
-  font_size: 100
-  quick_characters:
-    character_1: ema
-    character_2: hiro
-    character_3: sherri
-    character_4: ''
-    character_5: ''
-    character_6: ''
 win32:
   character_1: ctrl+1
   character_2: ctrl+2

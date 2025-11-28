@@ -2,6 +2,7 @@
 
 import os
 import random
+import io
 from PIL import Image, ImageDraw, ImageFont
 
 from text_fit_draw import draw_text_auto
@@ -35,6 +36,36 @@ class ImageProcessor:
         # 当前预览的基础图片（用于快速生成）
         self.current_base_image = None
         self.current_base_key = None
+
+    def _compress_image(self, image: Image.Image, compression_settings: dict) -> Image.Image:
+        """压缩图像"""
+        if not compression_settings.get("pixel_reduction_enabled", False):
+            return image
+
+        compressed_image = image
+        
+        # 应用像素减少压缩
+        if compression_settings.get("pixel_reduction_enabled", False):
+            reduction_ratio = compression_settings.get("pixel_reduction_ratio", 50) / 100.0
+            print(f"应用像素减少压缩，比例: {reduction_ratio}")  # 调试信息
+            
+            if reduction_ratio > 0 and reduction_ratio < 1:
+                new_width = int(image.width * (1 - reduction_ratio))
+                new_height = int(image.height * (1 - reduction_ratio))
+                
+                # 确保最小尺寸
+                new_width = max(new_width, 100)
+                new_height = max(new_height, 100)
+                
+                print(f"原始尺寸: {image.width}x{image.height}, 压缩后: {new_width}x{new_height}")  # 调试信息
+                
+                # 使用高质量下采样
+                compressed_image = compressed_image.resize(
+                    (new_width, new_height), 
+                    Image.Resampling.LANCZOS
+                )
+        
+        return compressed_image
 
     def _load_background(self, background_index: int) -> Image.Image:
         """加载背景图片到缓存"""
@@ -194,26 +225,28 @@ class ImageProcessor:
         content_image: Image.Image = None,
         font_path: str = None,
         font_size: int = None,
+        compression_settings: dict = None
     ) -> bytes:
         """快速生成图片 - 使用缓存的基础图片"""
         cache_key = f"{character_name}_{background_index}_{emotion_index}"
 
         # 如果当前缓存的基础图片与目标一致，直接使用
         if self.current_base_key == cache_key and self.current_base_image:
-            base_image = self.current_base_image.copy()
+            base_image = self.current_base_image
         else:
             # 否则生成新的基础图片
             base_image = self.generate_base_image_with_text(
                 character_name, background_index, emotion_index
             )
-            self.current_base_image = base_image.copy()
+            self.current_base_image = base_image
             self.current_base_key = cache_key
 
         text_box_topleft = (self.box_rect[0][0], self.box_rect[0][1])
         image_box_bottomright = (self.box_rect[1][0], self.box_rect[1][1])
 
         if content_image is not None:
-            return paste_image_auto(
+            # 调用粘贴图像函数，它返回的是字节数据
+            result = paste_image_auto(
                 image_source=base_image,
                 image_overlay=None,
                 top_left=text_box_topleft,
@@ -233,7 +266,8 @@ class ImageProcessor:
             # 使用设置的字体大小作为最大字体大小
             max_font_height = font_size if font_size else 145
             
-            return draw_text_auto(
+            # 调用绘制文本函数，它返回的是字节数据
+            result = draw_text_auto(
                 image_source=base_image,
                 image_overlay=None,
                 top_left=text_box_topleft,
@@ -251,6 +285,25 @@ class ImageProcessor:
             )
         else:
             raise ValueError("没有文本或图像内容")
+
+        # 统一处理结果
+        if isinstance(result, bytes):
+            # 如果是字节数据，转换为图像进行处理
+            result_image = Image.open(io.BytesIO(result))
+        elif isinstance(result, Image.Image):
+            # 如果是图像对象，直接使用
+            result_image = result
+        else:
+            raise ValueError(f"返回了未知类型: {type(result)}")
+
+        # 应用压缩
+        if compression_settings and compression_settings.get("pixel_reduction_enabled", False):
+            result_image = self._compress_image(result_image, compression_settings)
+
+        # 转换为PNG字节
+        output_bytes = io.BytesIO()
+        result_image.save(output_bytes, format="PNG")
+        return output_bytes.getvalue()
 
     def generate_preview_image(
         self,

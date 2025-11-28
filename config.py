@@ -46,12 +46,12 @@ class ConfigLoader:
         return {
             "win": {
                 "start_generate": "ctrl+e",
-                "next_character": "ctrl+j",
-                "prev_character": "ctrl+l",
-                "next_emotion": "ctrl+u",
-                "prev_emotion": "ctrl+o",
-                "next_background": "ctrl+i",
-                "prev_background": "ctrl+k",
+                "next_character": "ctrl+l",
+                "prev_character": "ctrl+j",
+                "next_emotion": "ctrl+o",
+                "prev_emotion": "ctrl+u",
+                "next_background": "ctrl+k",
+                "prev_background": "ctrl+i",
                 "toggle_listener": "alt+ctrl+p",
                 "character_1": "ctrl+1",
                 "character_2": "ctrl+2",
@@ -62,12 +62,12 @@ class ConfigLoader:
             },
             "darwin": {
                 "start_generate": "cmd+e",
-                "next_character": "cmd+j",
-                "prev_character": "cmd+l",
-                "next_emotion": "cmd+u",
-                "prev_emotion": "cmd+o",
-                "next_background": "cmd+i",
-                "prev_background": "cmd+k",
+                "next_character": "cmd+l",
+                "prev_character": "cmd+j",
+                "next_emotion": "cmd+o",
+                "prev_emotion": "cmd+u",
+                "next_background": "cmd+k",
+                "prev_background": "cmd+i",
                 "toggle_listener": "alt+cmd+p",
                 "character_1": "cmd+1",
                 "character_2": "cmd+2",
@@ -75,11 +75,6 @@ class ConfigLoader:
                 "character_4": "cmd+4",
                 "character_5": "cmd+5",
                 "character_6": "cmd+6"
-            },
-            "gui": {
-                "font_family": "Arial",
-                "font_size": 12,
-                "quick_characters": {}
             }
         }
     
@@ -102,47 +97,46 @@ class ConfigLoader:
     
     def load_gui_settings(self):
         """加载GUI设置"""
-        keymap_file = os.path.join(self.config_path, "keymap.yml")
+        settings_file = os.path.join(self.config_path, "settings.yml")
         default_settings = {
-            "font_family": "Arial",
-            "font_size": 12,
-            "quick_characters": {}
+            "font_family": "font3",
+            "font_size": 110,
+            "quick_characters": {},
+            "image_compression": {
+                # "enabled": False,
+                # "quality_preset": 85,
+                "pixel_reduction_enabled": False,
+                "pixel_reduction_ratio": 50
+            }
         }
         
         try:
-            if os.path.exists(keymap_file):
-                with open(keymap_file, 'r', encoding='utf-8') as f:
-                    keymap_data = yaml.safe_load(f)
-                    gui_settings = keymap_data.get("gui", {})
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    settings_data = yaml.safe_load(f) or {}
                     
-                    # 合并设置
-                    for key, value in default_settings.items():
-                        if key not in gui_settings:
-                            gui_settings[key] = value
-                    return gui_settings
+                    # 合并设置，确保新字段有默认值
+                    merged_settings = default_settings.copy()
+                    merged_settings.update(settings_data)
+                    
+                    # 确保image_compression部分完整
+                    if "image_compression" in settings_data:
+                        merged_settings["image_compression"].update(settings_data["image_compression"])
+                    
+                    return merged_settings
         except Exception as e:
             print(f"加载GUI设置失败: {e}")
             
         return default_settings
     
     def save_gui_settings(self, settings):
-        """保存GUI设置到keymap.yml - 确保不会重写整个文件"""
+        """保存GUI设置到settings.yml"""
         try:
-            keymap_file = os.path.join(self.config_path, "keymap.yml")
-            
-            # 读取现有的keymap文件
-            if os.path.exists(keymap_file):
-                with open(keymap_file, 'r', encoding='utf-8') as f:
-                    keymap_data = yaml.safe_load(f) or {}
-            else:
-                keymap_data = self._get_default_keymap()
-            
-            # 更新GUI设置，保留其他设置
-            keymap_data["gui"] = settings
+            settings_file = os.path.join(self.config_path, "settings.yml")
             
             # 写回文件
-            with open(keymap_file, 'w', encoding='utf-8') as f:
-                yaml.dump(keymap_data, f, allow_unicode=True, default_flow_style=False)
+            with open(settings_file, 'w', encoding='utf-8') as f:
+                yaml.dump(settings, f, allow_unicode=True, default_flow_style=False)
             
             return True
         except Exception as e:

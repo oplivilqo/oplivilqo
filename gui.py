@@ -106,6 +106,106 @@ class SettingsWindow:
             row=2, column=0, columnspan=2, sticky=tk.W, pady=2
         )
 
+        # 图像压缩设置
+        compression_frame = ttk.LabelFrame(parent, text="图像压缩设置", padding="10")
+        compression_frame.pack(fill=tk.X, pady=5)
+
+        # 启用图像压缩
+        # self.compression_enabled_var = tk.BooleanVar(
+        #     value=self.settings.get("image_compression", {}).get("enabled", False)
+        # )
+        # compression_cb = ttk.Checkbutton(
+        #     compression_frame,
+        #     text="启用图像压缩",
+        #     variable=self.compression_enabled_var,
+        #     command=self.on_setting_changed
+        # )
+        # compression_cb.grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=5)
+
+        # # 压缩质量预设滑条
+        # ttk.Label(compression_frame, text="压缩质量:").grid(
+        #     row=1, column=0, sticky=tk.W, pady=5
+        # )
+        
+        # quality_frame = ttk.Frame(compression_frame)
+        # quality_frame.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=5, padx=5)
+        
+        # self.quality_preset_var = tk.IntVar(
+        #     value=self.settings.get("image_compression", {}).get("quality_preset", 85)
+        # )
+        # quality_scale = ttk.Scale(
+        #     quality_frame,
+        #     from_=10,
+        #     to=95,
+        #     variable=self.quality_preset_var,
+        #     orient=tk.HORIZONTAL,
+        #     length=200
+        # )
+        # quality_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        # quality_scale.bind("<ButtonRelease-1>", self.on_setting_changed)
+        
+        # self.quality_value_label = ttk.Label(quality_frame, text=f"{self.quality_preset_var.get()}%")
+        # self.quality_value_label.pack(side=tk.RIGHT, padx=5)
+        
+        # # 绑定变量变化更新标签
+        # self.quality_preset_var.trace_add("write", self.update_quality_label)
+
+        # 像素减少压缩
+        self.pixel_reduction_var = tk.BooleanVar(
+            value=self.settings.get("image_compression", {}).get("pixel_reduction_enabled", False)
+        )
+        pixel_reduction_cb = ttk.Checkbutton(
+            compression_frame,
+            text="启用像素削减压缩",
+            variable=self.pixel_reduction_var,
+            command=self.on_setting_changed
+        )
+        pixel_reduction_cb.grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=5)
+
+        # 像素减少比例滑条
+        ttk.Label(compression_frame, text="像素削减比例:").grid(
+            row=3, column=0, sticky=tk.W, pady=5
+        )
+        
+        pixel_frame = ttk.Frame(compression_frame)
+        pixel_frame.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=5, padx=5)
+        
+        self.pixel_reduction_ratio_var = tk.IntVar(
+            value=self.settings.get("image_compression", {}).get("pixel_reduction_ratio", 50)
+        )
+        pixel_scale = ttk.Scale(
+            pixel_frame,
+            from_=10,
+            to=90,
+            variable=self.pixel_reduction_ratio_var,
+            orient=tk.HORIZONTAL,
+            length=200
+        )
+        pixel_scale.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        pixel_scale.bind("<ButtonRelease-1>", self.on_setting_changed)
+        
+        self.pixel_value_label = ttk.Label(pixel_frame, text=f"{self.pixel_reduction_ratio_var.get()}%")
+        self.pixel_value_label.pack(side=tk.RIGHT, padx=5)
+        
+        # 绑定变量变化更新标签
+        self.pixel_reduction_ratio_var.trace_add("write", self.update_pixel_label)
+
+        # 压缩说明
+        ttk.Label(compression_frame, 
+                 text="注：压缩质量影响PNG输出质量，像素减少通过降低BMP图像分辨率来减小文件大小", 
+                 font=("", 8), foreground="gray").grid(
+            row=4, column=0, columnspan=2, sticky=tk.W, pady=2
+        )
+
+    # def update_quality_label(self, *args):
+    #     """更新压缩质量标签"""
+    #     self.quality_value_label.config(text=f"{self.quality_preset_var.get()}%")
+    #     self.on_setting_changed()
+
+    def update_pixel_label(self, *args):
+        """更新像素减少比例标签"""
+        self.pixel_value_label.config(text=f"{self.pixel_reduction_ratio_var.get()}%")
+        self.on_setting_changed()
     def get_available_fonts(self):
         """获取可用字体列表，优先显示项目字体"""
         fonts_dir = os.path.join(self.core.config.BASE_PATH, "assets", "fonts")
@@ -320,6 +420,15 @@ class SettingsWindow:
         # 更新设置字典
         self.settings["font_family"] = self.font_family_var.get()
         self.settings["font_size"] = self.font_size_var.get()
+
+        # 更新图像压缩设置
+        if "image_compression" not in self.settings:
+            self.settings["image_compression"] = {}
+        
+        # self.settings["image_compression"]["enabled"] = self.compression_enabled_var.get()
+        # self.settings["image_compression"]["quality_preset"] = self.quality_preset_var.get()
+        self.settings["image_compression"]["pixel_reduction_enabled"] = self.pixel_reduction_var.get()
+        self.settings["image_compression"]["pixel_reduction_ratio"] = self.pixel_reduction_ratio_var.get()
 
         # 更新快速角色设置
         quick_characters = {}

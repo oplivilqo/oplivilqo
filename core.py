@@ -249,17 +249,9 @@ class ManosabaCore:
         # 确保使用预览时确定的表情和背景
         if hasattr(self, "preview_emotion") and self.preview_emotion is not None:
             emotion_index = self.preview_emotion
-        # elif self.selected_emotion is None:
-        #     emotion_index = self._get_random_emotion(self.get_current_emotion_count())
-        # else:
-        #     emotion_index = self.selected_emotion
 
         if hasattr(self, "preview_background") and self.preview_background is not None:
             background_index = self.preview_background
-        # elif self.selected_background is None:
-        #     background_index = self.image_processor.get_random_background()
-        # else:
-        #     background_index = self.selected_background
 
         # 获取剪切板内容
         text = self.cut_all_and_get_text()
@@ -291,6 +283,9 @@ class ManosabaCore:
             else:
                 font_path = self.get_current_font()  # 使用角色专用字体
                 
+            # 获取压缩设置
+            compression_settings = self.gui_settings.get("image_compression", {})
+                
             png_bytes = self.image_processor.generate_image_fast(
                 character_name,
                 background_index,
@@ -299,7 +294,11 @@ class ManosabaCore:
                 image,
                 font_path,  # 使用GUI设置的字体而不是角色专用字体
                 font_size,
+                compression_settings  # 传递压缩设置
             )
+            # 添加文件大小信息
+            # file_size_kb = len(png_bytes) / 1024
+            # print(f"生成的图片大小: {file_size_kb:.2f} KB")
         except Exception as e:
             return f"生成图像失败: {e}"
 

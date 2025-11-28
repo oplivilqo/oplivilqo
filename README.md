@@ -3,10 +3,12 @@
 一个基于Python的自动化表情包生成工具，能够快速生成带有自定义文本的魔法少女的魔女裁判文本框图片。[灵感来源与代码参考](https://github.com/MarkCup-Official/Anan-s-Sketchbook-Chat-Box)
 
 ## 未来将会实现的功能
-1. 接入ai，实现根据输入选择表情
-2. 兼容TUI
-3. 补全修复build脚本
-4. 自定义字体和字体大小
+1. 修复emoji显示问题（v1.3）
+2. 接入ai，实现根据输入选择表情（v1.4）
+3. 兼容TUI（v1.6）
+4. 补全修复build脚本（v1.6）
+
+## 目前发现的问题
 
 ## 修改说明
 本仓库由YangQwQ基于oplivilqo的项目二次开发，基于Tkinter实现了图形化用户界面
@@ -14,12 +16,15 @@
 1. 添加了图片预览功能（会预览下一个发送的图片的样子，即使是随机生成）
 2. 移除了预合成功能，改为实时预览，并直接在预览图的基础上合成最后的文字
 3. 添加了随机人物差分和背景的开关
-4. 添加了设置界面并提供一些基本设置
+4. 添加了设置界面并提供一些基本设置，包括：
+   - 字体设置
+   - 快捷键设置
+   - 图像压缩设置
 
 ## 程序界面
 <img width="802" height="732" alt="image" src="https://github.com/user-attachments/assets/1dd3cde1-8eae-411d-8582-32fdc1eea628" />
 ## 设置界面
-<img width="502" height="632" alt="image" src="https://github.com/user-attachments/assets/e8800627-285c-4a2d-9015-5371a379d7d7" />
+<img width="502" height="632" alt="image" src="https://github.com/user-attachments/assets/e69ad801-c36c-4398-8832-4b610a0a38b4" />
 
 ## 使用须知
 1. 目前已经能用，但是还有很多功能没有实现
@@ -104,7 +109,8 @@ warden:
 
 - 新增了快捷切换人物背景的热键（含六个可自定义的快捷角色切换位、上下切换表情/背景/角色的键位以及），但是目前修改键位需要在keymap.yml里改
 - 新增了暂停和启用按键监听的热键，默认为ctrl+alt+p
-- 预留了字体选择的位置（暂不可用）
+- 添加了自定义字体的功能（字体文件需要放在assets/font文件夹中），字体大小也可以在设置中自定义
+- 添加了图像压缩功能（因为剪贴板的特性，所以是直接削减像素压缩）
 
 ### v1.2
 

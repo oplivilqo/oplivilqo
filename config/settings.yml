@@ -1,0 +1,12 @@
+font_family: font3
+font_size: 100
+image_compression:
+  pixel_reduction_enabled: true
+  pixel_reduction_ratio: 79
+quick_characters:
+  character_1: ema
+  character_2: hiro
+  character_3: sherri
+  character_4: ''
+  character_5: ''
+  character_6: ''

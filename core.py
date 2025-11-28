@@ -95,6 +95,21 @@ class ManosabaCore:
         """获取当前角色的表情数量"""
         return self.mahoshojo[self.get_character()]["emotion_count"]
 
+    def get_character_list(self):
+        """获取角色列表"""
+        return self.character_list
+
+    def get_character_name(self, index=None, full_name=False):
+        """获取角色名称（兼容性方法）"""
+        return self.get_character(index, full_name)
+
+    def get_gui_settings(self):
+        """获取GUI设置"""
+        return self.config_loader.load_gui_settings()
+
+    def save_gui_settings(self, settings):
+        """保存GUI设置"""
+        return self.config_loader.save_gui_settings(settings)
     def generate_preview(self, preview_size=(400, 300)) -> tuple:
         """生成预览图片和相关信息"""
         character_name = self.get_character()

@@ -1,9 +1,7 @@
-import time
 import psutil
 from pynput.keyboard import GlobalHotKeys
 import os
 from sys import platform
-from PIL import Image
 
 from rich import print
 
@@ -107,7 +105,7 @@ class ManosabaTextBox:
         """获取当前角色的表情数量"""
         return self.mahoshojo[self.get_character()]["emotion_count"]
 
-    def delete(self, folder_path: str = None) -> None:
+    def delete(self) -> None:
         """删除缓存文件夹中的所有jpg文件"""
         self.img_generator.delete_cache()
 

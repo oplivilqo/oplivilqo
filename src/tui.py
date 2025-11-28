@@ -40,8 +40,6 @@ class ManosabaTUI(App):
     TITLE = "魔裁 文本框生成器"
     theme = "tokyo-night"
 
-    current_character = reactive("sherri")
-    current_emotion = reactive(1)
     status_msg = reactive("就绪")
 
     BINDINGS = [

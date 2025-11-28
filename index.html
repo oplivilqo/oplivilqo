@@ -9,8 +9,16 @@
     <link href="./css/tabler.min.css" type="text/css" rel="stylesheet" />
     <style>
         @font-face {
-            font-family: "华文中宋";
-            src: url("./assets/STZHONGS.TTF");
+            font-family: "font1";
+            src: url("./assets/fonts/font1.ttf");
+        }
+        @font-face {
+            font-family: "font2";
+            src: url("./assets/fonts/font2.ttf");
+        }
+        @font-face {
+            font-family: "font3";
+            src: url("./assets/fonts/font3.ttf");
         }
     </style>
 </head>
@@ -32,35 +40,86 @@
             <!-- Page body -->
             <div class="page-body">
                 <div class="container-xl">
-                    <div class="mb-3">
-                        <label class="form-label">背景图</label>
-                        <div class="row g-2" id="backgrounds_div"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">角色</label>
-                        <div class="row g-2" id="characters_div"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">表情</label>
-                        <div class="row g-2" id="emotions_div"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">文本</label>
-                        <div class="row g-2" id="texts_div">
-                            <div class="col">
-                                <input type="text" name="text" class="form-control" placeholder="输入文本" onchange="updateCanvas()"/>
+                    <div class="card">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
+                                <li class="nav-item">
+                                    <a href="#tabs-background" class="nav-link" data-bs-toggle="tab">背景</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="#tabs-chara" class="nav-link active" data-bs-toggle="tab">选项</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="#tabs-settings" class="nav-link" data-bs-toggle="tab">配置</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content">
+                                <div class="tab-pane" id="tabs-background">
+                                    <div class="mb-0">
+                                        <label class="form-label">背景图</label>
+                                        <div class="row g-2" id="backgrounds_div"></div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane active show" id="tabs-chara">
+                                    <div class="mb-3">
+                                        <label class="form-label">角色</label>
+                                        <div class="row g-2" id="characters_div"></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">表情</label>
+                                        <div class="row g-2" id="emotions_div"></div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">文本</label>
+                                        <div class="row g-2" id="texts_div">
+                                            <div class="col">
+                                                <input type="text" name="text" class="form-control" placeholder="输入文本" oninput="updateCanvas()" onchange="updateCanvas()"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">字体大小</label>
+                                        <input type="range" name="text_font_size" class="form-range" value="128" min="48" max="256" step="1" onchange="updateCanvas()"/>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="tabs-settings">
+                                    <div class="mb-3" id="configs_upload_div">
+                                        <p>由于安全问题，浏览器不允许页面跨域读取文件。首次运行或脚本更新时请手动加载<code>config</code>目录下的<code>chara_meta.yml</code>和<code>text_configs.yml</code>文件。</p>
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <label class="form-label mb-0">请上传配置文件<code>chara_meta.yml</code>和<code>text_configs.yml</code>：</label>
+                                            <button class="btn btn-sm" onclick="resetConfigs()">重置</button>
+                                        </div>
+                                        <input type="file" name="configs" class="form-control" accept=".yml,application/yaml" multiple/>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">角色元数据 <code>chara_meta.yml</code></label>
+                                                <label class="form-label" id="chara_meta-indicator"><span class="text-danger">未加载</span></label>
+                                            </div>
+                                            <textarea class="form-control" id="chara_meta" rows="20" readonly></textarea>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">文本配置 <code>text_configs.yml</code></label>
+                                                <label class="form-label" id="text_configs-indicator"><span class="text-danger">未加载</span></label>
+                                            </div>
+                                            <textarea class="form-control autosize" id="text_configs" rows="20" readonly></textarea>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">字体大小</label>
-                        <input type="range" name="text_font_size" class="form-range" value="128" min="48" max="256" step="1" onchange="updateCanvas()"/>
+                    <div id="preview_div">
+                        <div class="d-flex align-items-center justify-content-between my-2">
+                            <div class="h3 mb-0">成品图预览</div>
+                            <button class="btn" onclick="downloadImage()">下载保存</button>
+                        </div>
+                        <canvas class="img-fluid" id="canvas" width="2560" height="834"></canvas>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="h3 mb-0">成品图预览</div>
-                        <button class="btn" onclick="downloadImage()">下载保存</button>
-                    </div>
-                    <canvas class="img-fluid" id="canvas" width="2560" height="834"></canvas>
                 </div>
             </div>
             <footer class="footer footer-transparent d-print-none">
@@ -83,11 +142,8 @@
     </div><!-- page -->
     <script src="./js/jquery.min.js" type="application/javascript"></script>
     <script src="./js/FileSaver.min.js" type="application/javascript"></script>
+    <script src="./js/js-yaml.min.js" type="application/javascript"></script>
     <script src="./js/tabler.min.js" type="application/javascript"></script>
-    <script src="./js/consts.js" type="application/javascript"></script>
     <script src="./js/functions.js" type="application/javascript"></script>
-    <script defer>
-        init();
-    </script>
 </body>
 </html>

@@ -148,6 +148,35 @@ function updateCanvas() {
             ctx.fillStyle = `rgb(255, 255, 255)`;
             ctx.fillText(line, x, y);
         }
+
+        // 突出显示【文本】部分
+        let isHighlight = false;
+        for (let i = 0; i < Math.min(lines.length, maxLines); i++) {
+            const line = lines[i];
+            const x = text_postion[0];
+            // 保持与原来单行位置一致：首行基线为 text_font_size + text_postion[1]
+            const y = text_font_size + text_postion[1] + i * lineHeight;
+
+            // 检查并切换绘制颜色
+            const parts = line.split(/(【|】)/g);
+            let currentX = x;
+
+            parts.forEach(part => {
+                if (part === '【' || part === '】') {
+                    isHighlight = true;
+                }
+                if (isHighlight) {
+                    ctx.fillStyle = `rgb(${text_configs[character][0]['font_color'][0]},${text_configs[character][0]['font_color'][1]},${text_configs[character][0]['font_color'][2]})`
+                    ctx.fillText(part, currentX, y); // 绘制高亮显示的文本
+                    currentX += ctx.measureText(part).width; // 更新当前X坐标
+                } else {
+                    currentX += ctx.measureText(part).width; // 更新当前X坐标
+                }
+                if (part === '】') {
+                    isHighlight = false;
+                }
+            });
+        }
     }
 }
 function downloadImage() {

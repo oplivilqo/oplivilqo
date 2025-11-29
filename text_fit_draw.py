@@ -42,7 +42,6 @@ def draw_text_auto(
     align: Align = "center",
     valign: VAlign = "middle",
     line_spacing: float = 0.15,
-    bracket_color: Tuple[int, int, int] = (137,177,251),  # 中括号及内部内容颜色
     image_overlay: Union[str, Image.Image,None]=None,
     role_name: str = "unknown",  # 添加角色名称参数
     text_configs_dict: dict = None,  # 添加文字配置字典参数
@@ -162,6 +161,7 @@ def draw_text_auto(
     def parse_color_segments(s: str,in_bracket: bool) -> Tuple[list[tuple[str, Tuple[int, int, int]]],bool]:
         segs: list[tuple[str, Tuple[int, int, int]]] = []
         buf = ""
+        bracket_color = tuple(text_configs_dict[role_name][0]["font_color"])
         for ch in s:
             if ch == "[" or ch == "【":
                 if buf:

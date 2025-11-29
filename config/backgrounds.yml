@@ -1,0 +1,49 @@
+backgrounds:
+  c1:
+    name: C1
+    file: c1.png
+  c2:
+    name: C2
+    file: c2.png
+  c3:
+    name: C3
+    file: c3.png
+  c4:
+    name: C4
+    file: c4.png
+  c5:
+    name: C5
+    file: c5.png
+  c6:
+    name: C6
+    file: c6.png
+  c7:
+    name: C7
+    file: c7.png
+  c8:
+    name: C8
+    file: c8.png
+  c9:
+    name: C9
+    file: c9.png
+  c10:
+    name: C10
+    file: c10.png
+  c11:
+    name: C11
+    file: c11.png
+  c12:
+    name: C12
+    file: c12.png
+  c13:
+    name: C13
+    file: c13.png
+  c14:
+    name: C14
+    file: c14.png
+  c15:
+    name: C15
+    file: c15.png
+  c16:
+    name: C16
+    file: c16.png

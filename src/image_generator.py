@@ -21,13 +21,13 @@ class ImageGenerator:
     def fit_image(self, img: Image.Image) -> Image.Image:
         """
         调整图像大小以适应尺寸限制
-        保持原图比例不变
+        保持原图比例不变进行缩放
         """
         max_w, max_h = self.IMG_SETTINGS['avatar_width'], self.IMG_SETTINGS['avatar_height']
         w, h = img.size
 
         # 计算缩放比例，取较小的那个以确保两个维度都不超限
-        scale = min(max_w / w, max_h / h, 1.0)  # 1.0确保不放大
+        scale = min(max_w / w, max_h / h)
 
         new_w = int(w * scale)
         new_h = int(h * scale)

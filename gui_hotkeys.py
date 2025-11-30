@@ -23,7 +23,7 @@ class HotkeyManager:
     def hotkey_listener(self):
         """热键监听线程"""
         try:
-            while True:
+            while self.hotkey_listener_active:
                 # 重新加载设置以获取最新配置
                 try:
                     # 获取当前平台的热键

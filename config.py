@@ -35,7 +35,7 @@ class ConfigLoader:
         
         try:
             with open(keymap_file, 'r', encoding="utf-8") as fp:
-                config = yaml.safe_load(fp)
+                config = yaml.safe_load(fp) or {}
                 return config.get(platform, {})
         except Exception as e:
             print(f"加载keymap.yml失败: {e}")
@@ -45,14 +45,14 @@ class ConfigLoader:
     def _get_default_keymap(self):
         """获取默认快捷键配置"""
         return {
-            "win": {
+            "win32": {
                 "start_generate": "ctrl+e",
-                "next_character": "ctrl+l",
-                "prev_character": "ctrl+j",
-                "next_emotion": "ctrl+o",
-                "prev_emotion": "ctrl+u",
-                "next_background": "ctrl+k",
-                "prev_background": "ctrl+i",
+                "next_character": "ctrl+alt+l",
+                "prev_character": "ctrl+alt+j",
+                "next_emotion": "ctrl+alt+o",
+                "prev_emotion": "ctrl+alt+u",
+                "next_background": "ctrl+alt+k",
+                "prev_background": "ctrl+alt+i",
                 "toggle_listener": "alt+ctrl+p",
                 "character_1": "ctrl+1",
                 "character_2": "ctrl+2",
@@ -63,12 +63,12 @@ class ConfigLoader:
             },
             "darwin": {
                 "start_generate": "cmd+e",
-                "next_character": "cmd+l",
-                "prev_character": "cmd+j",
-                "next_emotion": "cmd+o",
-                "prev_emotion": "cmd+u",
-                "next_background": "cmd+k",
-                "prev_background": "cmd+i",
+                "next_character": "cmd+alt+l",
+                "prev_character": "cmd+alt+j",
+                "next_emotion": "cmd+alt+o",
+                "prev_emotion": "cmd+alt+u",
+                "next_background": "cmd+alt+k",
+                "prev_background": "cmd+alt+i",
                 "toggle_listener": "alt+cmd+p",
                 "character_1": "cmd+1",
                 "character_2": "cmd+2",
@@ -83,6 +83,8 @@ class ConfigLoader:
         """保存快捷键配置"""
         try:
             keymap_file = os.path.join(self.config_path, "keymap.yml")
+            # 确保配置目录存在
+            os.makedirs(os.path.dirname(keymap_file), exist_ok=True)
             with open(keymap_file, 'w', encoding='utf-8') as f:
                 yaml.dump(keymap_data, f, allow_unicode=True, default_flow_style=False)
             return True
@@ -92,9 +94,64 @@ class ConfigLoader:
     
     def load_process_whitelist(self, platform):
         """加载进程白名单"""
-        with open(os.path.join(self.config_path, "process_whitelist.yml"), 'r', encoding="utf-8") as fp:
-            config = yaml.safe_load(fp)
-            return config.get(platform, [])
+        # 规范化平台键
+        if platform.startswith('win'):
+            platform_key = 'win32'
+        elif platform == 'darwin':
+            platform_key = 'darwin'
+        else:
+            platform_key = 'win32'  # 默认
+            
+        whitelist_file = os.path.join(self.config_path, "process_whitelist.yml")
+        
+        # 如果文件不存在，返回空列表
+        if not os.path.exists(whitelist_file):
+            return []
+            
+        try:
+            with open(whitelist_file, 'r', encoding="utf-8") as fp:
+                config = yaml.safe_load(fp) or {}
+                return config.get(platform_key, [])
+        except Exception as e:
+            print(f"加载process_whitelist.yml失败: {e}")
+            return []
+    
+    def save_process_whitelist(self, platform, processes):
+        """保存进程白名单"""
+        try:
+            # 规范化平台键
+            if platform.startswith('win'):
+                platform_key = 'win32'
+            elif platform == 'darwin':
+                platform_key = 'darwin'
+            else:
+                platform_key = 'win32'  # 默认
+                
+            whitelist_file = os.path.join(self.config_path, "process_whitelist.yml")
+            
+            # 如果文件已存在，则先加载现有配置，然后合并
+            existing_data = {}
+            if os.path.exists(whitelist_file):
+                try:
+                    with open(whitelist_file, 'r', encoding='utf-8') as f:
+                        existing_data = yaml.safe_load(f) or {}
+                except Exception as e:
+                    print(f"读取现有白名单配置失败: {e}")
+            
+            # 更新当前平台的白名单
+            existing_data[platform_key] = processes
+            
+            # 确保配置目录存在
+            os.makedirs(os.path.dirname(whitelist_file), exist_ok=True)
+            
+            # 保存回文件
+            with open(whitelist_file, 'w', encoding='utf-8') as f:
+                yaml.dump(existing_data, f, allow_unicode=True, default_flow_style=False)
+            
+            return True
+        except Exception as e:
+            print(f"保存进程白名单失败: {e}")
+            return False
         
     def load_gui_settings(self):
         """加载GUI设置"""
@@ -138,9 +195,22 @@ class ConfigLoader:
         try:
             settings_file = os.path.join(self.config_path, "settings.yml")
             
+            # 如果文件已存在，则先加载现有配置，然后合并
+            if os.path.exists(settings_file):
+                with open(settings_file, 'r', encoding='utf-8') as f:
+                    existing_settings = yaml.safe_load(f) or {}
+                # 合并设置，新的设置覆盖旧的
+                merged_settings = existing_settings.copy()
+                merged_settings.update(settings)
+            else:
+                merged_settings = settings
+            
+            # 确保配置目录存在
+            os.makedirs(os.path.dirname(settings_file), exist_ok=True)
+            
             # 写回文件
             with open(settings_file, 'w', encoding='utf-8') as f:
-                yaml.dump(settings, f, allow_unicode=True, default_flow_style=False)
+                yaml.dump(merged_settings, f, allow_unicode=True, default_flow_style=False)
             
             return True
         except Exception as e:

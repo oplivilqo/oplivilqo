@@ -45,6 +45,22 @@ class ManosabaGUI:
         # 根据初始状态设置按钮可用性
         self.update_sentiment_button_state()
 
+    def reinitialize_hotkeys(self):
+        """重新初始化热键管理器"""
+        # 停止当前的热键监听
+        self.hotkey_manager.hotkey_listener_active = False
+        
+        # 等待一小段时间确保监听线程停止
+        self.root.after(100, self._restart_hotkeys)
+        
+    def _restart_hotkeys(self):
+        """重新启动热键监听"""
+        # 重新创建热键管理器
+        self.hotkey_manager = HotkeyManager(self)
+        # 重新设置热键
+        self.hotkey_manager.setup_hotkeys()
+        self.update_status("热键设置已更新")
+        
     def setup_gui(self):
         """设置 GUI 界面"""
         # 创建菜单栏

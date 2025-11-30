@@ -317,6 +317,16 @@ class ManosabaCore:
         self.text_configs_dict = self.config_loader.load_text_configs()
         self.keymap = self.config_loader.load_keymap(platform)
         self.process_whitelist = self.config_loader.load_process_whitelist(platform)
+        
+    def reload_configs(self):
+        """重新加载配置（用于热键更新后）"""
+        # 重新加载快捷键映射
+        self.keymap = self.config_loader.load_keymap(platform)
+        # 重新加载进程白名单
+        self.process_whitelist = self.config_loader.load_process_whitelist(platform)
+        # 重新加载GUI设置
+        self.gui_settings = self.config_loader.load_gui_settings()
+        self.update_status("配置已重新加载")
 
     def get_character(self, index: str | None = None, full_name: bool = False) -> str:
         """获取角色名称"""

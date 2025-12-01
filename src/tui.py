@@ -99,10 +99,19 @@ class ManosabaTUI(App):
                     with ScrollableContainer():
                         with RadioSet(id="emotion_radio"):
                             emotion_cnt = self.textbox.get_current_emotion_count()
-                            for i in range(0, emotion_cnt + 1):
+                            emotion_names = self.textbox.get_current_emotion_names()
+                            # 第一个选项：随机表情
+                            yield RadioButton(
+                                "随机表情",
+                                value=True,
+                                id="emotion_0"
+                            )
+                            # 后续选项：使用文件名
+                            for i in range(1, emotion_cnt + 1):
+                                display_name = emotion_names[i - 1] if (i - 1) < len(emotion_names) else f"表情 {i}"
                                 yield RadioButton(
-                                    f"表情 {i}" if i > 0 else "随机表情",
-                                    value = (i == 0),
+                                    display_name,
+                                    value=False,
                                     id=f"emotion_{i}"
                                 )
                 with Vertical(id="switch_panel"):
@@ -249,10 +258,17 @@ class ManosabaTUI(App):
 
         # 添加新的按钮
         emotion_cnt = self.textbox.get_current_emotion_count()
+        emotion_names = self.textbox.get_current_emotion_names()
+
         for i in range(0, emotion_cnt + 1):
             unique_id = f"emotion_{self.current_character}_{i}"
+            if i == 0:
+                display_name = "随机表情"
+            else:
+                display_name = emotion_names[i - 1] if (i - 1) < len(emotion_names) else f"表情 {i}"
+
             btn = RadioButton(
-                f"表情 {i}" if i > 0 else "随机表情",
+                display_name,
                 value=(self.textbox.emote == i),
                 id=unique_id
             )

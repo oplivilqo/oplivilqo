@@ -23,6 +23,7 @@ class ImageGenerator:
         # 内存缓存
         self._bg_cache: list[Image.Image] = []  # 背景图缓存（16张）
         self._char_cache: OrderedDict[str, list[Image.Image]] = OrderedDict()  # 角色表情缓存（LRU）
+        self._char_emotion_names: OrderedDict[str, list[str]] = OrderedDict()  # 角色表情文件名缓存
 
         # 预加载所有背景
         self._preload_backgrounds()
@@ -49,8 +50,12 @@ class ImageGenerator:
             bg_img = Image.open(bg_path).convert("RGBA")
             self._bg_cache.append(bg_img)
 
-    def _load_character_emotions(self, character_name: str, emotion_cnt: int) -> list[Image.Image]:
-        """加载指定角色的所有表情到内存（扫描文件夹下所有PNG/JPG/JPEG图片）"""
+    def _load_character_emotions(self, character_name: str, emotion_cnt: int) -> tuple[list[Image.Image], list[str]]:
+        """加载指定角色的所有表情到内存（扫描文件夹下所有PNG/JPG/JPEG图片）
+
+        Returns:
+            tuple: (图片列表, 文件名列表)
+        """
         char_dir = os.path.join(self.base_path, 'assets', 'chara', character_name)
 
         if not os.path.exists(char_dir):
@@ -61,7 +66,7 @@ class ImageGenerator:
         for filename in sorted(os.listdir(char_dir)):
             lower_name = filename.lower()
             if lower_name.endswith(('.png', '.jpg', '.jpeg')):
-                image_files.append(os.path.join(char_dir, filename))
+                image_files.append(filename)
 
         if not image_files:
             raise FileNotFoundError(
@@ -72,26 +77,47 @@ class ImageGenerator:
         files_to_load = image_files[:emotion_cnt] if emotion_cnt > 0 else image_files
 
         emotions = []
-        for avatar_path in files_to_load:
+        emotion_names = []
+        for filename in files_to_load:
+            avatar_path = os.path.join(char_dir, filename)
             avatar = self.fit_image(Image.open(avatar_path).convert("RGBA"))
             emotions.append(avatar)
+            # 保存不带扩展名的文件名
+            name_without_ext = os.path.splitext(filename)[0]
+            emotion_names.append(name_without_ext)
 
-        return emotions
+        return emotions, emotion_names
 
     def _ensure_character_loaded(self, character_name: str, emotion_cnt: int) -> None:
         """确保角色已加载到缓存，使用LRU策略"""
         if character_name in self._char_cache:
             # 移到最后（最近使用）
             self._char_cache.move_to_end(character_name)
+            self._char_emotion_names.move_to_end(character_name)
             return
 
         # 加载角色
-        emotions = self._load_character_emotions(character_name, emotion_cnt)
+        emotions, emotion_names = self._load_character_emotions(character_name, emotion_cnt)
         self._char_cache[character_name] = emotions
+        self._char_emotion_names[character_name] = emotion_names
 
         # LRU淘汰
         while len(self._char_cache) > self.max_cached_chars:
             self._char_cache.popitem(last=False)
+            self._char_emotion_names.popitem(last=False)
+
+    def get_emotion_names(self, character_name: str) -> list[str]:
+        """获取指定角色的表情文件名列表
+
+        Args:
+            character_name: 角色名称
+
+        Returns:
+            表情文件名列表（不含扩展名）
+        """
+        if character_name in self._char_emotion_names:
+            return self._char_emotion_names[character_name]
+        return []
 
     def fit_image(self, img: Image.Image) -> Image.Image:
         """

@@ -105,6 +105,14 @@ class ManosabaTextBox:
         """获取当前角色的表情数量"""
         return self.mahoshojo[self.get_character()]["emotion_count"]
 
+    def get_current_emotion_names(self) -> list[str]:
+        """获取当前角色的表情文件名列表"""
+        character_name = self.get_character()
+        emotion_cnt = self.get_current_emotion_count()
+        # 确保角色已加载
+        self.img_generator._ensure_character_loaded(character_name, emotion_cnt)
+        return self.img_generator.get_emotion_names(character_name)
+
     def delete(self) -> None:
         """删除缓存文件夹中的所有jpg文件"""
         self.img_generator.delete_cache()

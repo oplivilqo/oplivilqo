@@ -1,5 +1,5 @@
 """ Textual UI 版本"""
-from pynput.keyboard import Key, Controller, GlobalHotKeys
+from pynput.keyboard import GlobalHotKeys
 from sys import platform
 import os
 import yaml
@@ -19,11 +19,10 @@ PLATFORM = platform.lower()
 if PLATFORM.startswith('win'):
     try:
         import win32clipboard
-        import keyboard
         import win32gui
         import win32process
     except ImportError:
-        print("[red]请先安装 Windows 运行库: pip install pywin32 keyboard[/red]")
+        print("[red]请先安装 Windows 运行库: pip install pywin32[/red]")
         raise
 
 class ManosabaTUI(App):
@@ -60,15 +59,12 @@ class ManosabaTUI(App):
     def setup_global_hotkeys(self) -> None:
         """设置全局热键监听器"""
         keymap = self.keymap
-        if PLATFORM == "darwin":
-            hotkeys = {
-                keymap['start_generate']: self.trigger_generate
-            }
+        hotkeys = {
+            keymap['start_generate']: self.trigger_generate
+        }
 
-            self.hotkey_listener = GlobalHotKeys(hotkeys)
-            self.hotkey_listener.start()
-        elif PLATFORM.startswith('win'):
-            keyboard.add_hotkey(keymap['start_generate'], self.trigger_generate)
+        self.hotkey_listener = GlobalHotKeys(hotkeys)
+        self.hotkey_listener.start()
 
     def trigger_generate(self) -> None:
         """全局热键触发生成图片（在后台线程中调用）"""

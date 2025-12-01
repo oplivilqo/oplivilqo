@@ -242,7 +242,7 @@ class ManosabaTextBox:
             return "生成图像失败！"
 
         self.clipboard_handler.copy_png_bytes_to_clipboard(png_bytes)
-        self.clipboard_handler.paste_and_send(self.AUTO_PASTE_IMAGE, self.AUTO_SEND_IMAGE)
+        self.clipboard_handler.paste_and_send(self.AUTO_PASTE_IMAGE, self.AUTO_SEND_IMAGE, self.keymap['send_image'])
 
         return (f"生成成功！角色: {character_name}, 表情: {1 + (self.value_1 // BG_CNT)}，"
                 f"内容：{'[图片]' if image else text[:20]}{'...' if len(text) > 20 else ''}")

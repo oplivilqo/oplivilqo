@@ -8,7 +8,7 @@ from sys import platform
 from PIL import Image
 import pyperclip
 import pyclip
-from pynput.keyboard import Key, Controller
+from pynput.keyboard import Key, Controller, KeyCode
 
 PLATFORM = platform.lower()
 
@@ -119,8 +119,14 @@ class ClipboardHandler:
             # todo: Linux 支持
             return None
 
-    def paste_and_send(self, auto_paste: bool, auto_send: bool) -> None:
-        """粘贴并发送图片"""
+    def paste_and_send(self, auto_paste: bool, auto_send: bool, send_key: str = "enter") -> None:
+        """
+        粘贴并发送图片
+        Args:
+            auto_paste: 是否自动粘贴
+            auto_send: 是否自动发送
+            send_key: 发送时使用的按键，支持pynput格式（如"enter", "<ctrl>+enter"）
+        """
         if auto_paste:
             self.kbd_controller.press(Key.ctrl if PLATFORM != 'darwin' else Key.cmd)
             self.kbd_controller.press('v')
@@ -130,6 +136,59 @@ class ClipboardHandler:
             time.sleep(0.3)
 
             if auto_send:
-                self.kbd_controller.press(Key.enter)
-                self.kbd_controller.release(Key.enter)
+                self._press_key_combination(send_key)
+
+    def _press_key_combination(self, key_str: str) -> None:
+        """
+        解析并按下按键组合
+        Args:
+            key_str: 按键字符串，支持pynput格式（如"enter", "<ctrl>+enter", "<cmd>+<shift>+a"）
+        """
+        parts = key_str.split('+')
+        modifiers = []
+        main_key = None
+
+        for part in parts:
+            part = part.strip()
+            if part.startswith('<') and part.endswith('>'):
+                key_name = part[1:-1].lower()
+                if key_name == 'ctrl':
+                    modifiers.append(Key.ctrl)
+                elif key_name == 'cmd':
+                    modifiers.append(Key.cmd)
+                elif key_name == 'alt':
+                    modifiers.append(Key.alt)
+                elif key_name == 'shift':
+                    modifiers.append(Key.shift)
+                elif key_name == 'enter':
+                    main_key = Key.enter
+                elif key_name == 'esc':
+                    main_key = Key.esc
+                elif key_name == 'tab':
+                    main_key = Key.tab
+                elif key_name == 'space':
+                    main_key = Key.space
+                else:
+                    main_key = part
+            else:
+                if part.lower() == 'enter':
+                    main_key = Key.enter
+                elif part.lower() == 'esc':
+                    main_key = Key.esc
+                elif part.lower() == 'tab':
+                    main_key = Key.tab
+                elif part.lower() == 'space':
+                    main_key = Key.space
+                else:
+                    main_key = part
+
+        for mod in modifiers:
+            self.kbd_controller.press(mod)
+
+        if main_key:
+            self.kbd_controller.press(main_key)
+            self.kbd_controller.release(main_key)
+
+        for mod in reversed(modifiers):
+            self.kbd_controller.release(mod)
 

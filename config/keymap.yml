@@ -1,8 +1,9 @@
 # 热键配置文件
-# pynput格式，参考：https://pynput.readthedocs.io/en/latest/keyboard.html#pynput.keyboard.Key
+# pynput格式: 组合键使用尖括号，使用加号连接，如<ctrl>+enter
+# 参考：https://pynput.readthedocs.io/en/latest/keyboard.html#pynput.keyboard.Key
 
 # Windows热键配置
-# 注意: Windows系统中，Ctrl键使用<ctrl>表示，Alt键使用<alt>表示，Win键使用<cmd>表示
+# 注意: Windows系统中，Win键使用<cmd>表示
 #     - 由于Windows系统机制，`<alt>`组合键可能无法正常使用
 win32:
   # 角色切换
@@ -61,6 +62,8 @@ win32:
 
   # 启动生成
   start_generate: "<ctrl>+e"
+  # 发送图片
+  send_image: "enter"
   # 删除缓存
   delete_cache: "<ctrl>+d"
   # 退出程序
@@ -129,6 +132,7 @@ darwin:
 
   # 功能键
   start_generate: "<cmd>+e"
+  send_image: "enter"
   delete_cache: "<ctrl>+d"
   quit: "<esc>"
   pause: "<ctrl>+<cmd>+r"

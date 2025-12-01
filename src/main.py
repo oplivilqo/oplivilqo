@@ -183,6 +183,8 @@ class ManosabaTextBox:
 
     def start(self) -> str:
         """生成并发送图片，返回状态消息"""
+        if not self.active:
+            return "程序处于暂停状态，无法生成图片"
         if not self._active_process_allowed():
             return "前台应用不在白名单内"
         character_name = self.get_character()

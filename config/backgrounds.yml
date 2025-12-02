@@ -1,49 +1,222 @@
 backgrounds:
-  c1:
-    name: C1
-    file: c1.png
-  c2:
-    name: C2
-    file: c2.png
-  c3:
-    name: C3
-    file: c3.png
-  c4:
-    name: C4
-    file: c4.png
-  c5:
-    name: C5
-    file: c5.png
-  c6:
-    name: C6
-    file: c6.png
-  c7:
-    name: C7
-    file: c7.png
-  c8:
-    name: C8
-    file: c8.png
-  c9:
-    name: C9
-    file: c9.png
-  c10:
-    name: C10
-    file: c10.png
-  c11:
-    name: C11
-    file: c11.png
-  c12:
-    name: C12
-    file: c12.png
-  c13:
-    name: C13
-    file: c13.png
-  c14:
-    name: C14
-    file: c14.png
-  c15:
-    name: C15
-    file: c15.png
-  c16:
-    name: C16
-    file: c16.png
+  bg001:
+    name: 001
+    file: Background_001_001.png
+    variants: 
+      bg001_001:
+        name: 001
+        file: Background_001_001.png
+      bg001_002:
+        name: 002
+        file: Background_001_002.png
+  bg002:
+    name: 002
+    file: Background_002_001.png
+  bg003:
+    name: 003
+    file: Background_003_001.png
+    variants: 
+      bg003_001:
+        name: 001
+        file: Background_003_001.png
+      bg003_002:
+        name: 002
+        file: Background_003_002.png
+  bg004:
+    name: 004
+    file: Background_004_001.png
+  bg005:
+    name: 005
+    file: Background_005_001.png
+    variants: 
+      bg005_001:
+        name: 001
+        file: Background_005_001.png
+      bg005_002:
+        name: 002
+        file: Background_005_002.png
+  bg006:
+    name: 006
+    file: Background_006_001.png
+  bg007:
+    name: 007
+    file: Background_007_001.png
+    variants: 
+      bg007_001:
+        name: 夜晚
+        file: Background_007_001.png
+      bg007_002:
+        name: 白天
+        file: Background_007_002.png
+  bg009:
+    name: 009
+    file: Background_009_001.png
+    variants: 
+      bg009_001:
+        name: 白天
+        file: Background_009_001.png
+      bg009_002:
+        name: 夜晚
+        file: Background_009_002.png
+  bg010:
+    name: 010
+    file: Background_010_001.png
+  bg011:
+    name: 011
+    file: Background_011_001.png
+  bg012:
+    name: 012
+    file: Background_012_001.png
+  bg013:
+    name: 013
+    file: Background_013_001.png
+  bg014:
+    name: 014
+    file: Background_014_001.png
+  bg016:
+    name: 016
+    file: Background_016_001.png
+  bg017:
+    name: 017
+    file: Background_017_001.png
+    variants: 
+      bg017_001:
+        name: 白天
+        file: Background_017_001.png
+      bg017_002:
+        name: 夜晚
+        file: Background_017_002.png
+  bg018:
+    name: 018
+    file: Background_018_001.png
+  bg019:
+    name: 019
+    file: Background_019_001.png
+    variants: 
+      bg019_001:
+        name: 白天
+        file: Background_019_001.png
+      bg019_002:
+        name: 夜晚
+        file: Background_019_002.png
+  bg020:
+    name: 020
+    file: Background_020_001.png
+  bg021:
+    name: 021
+    file: Background_021_001.png
+  bg022:
+    name: 022
+    file: Background_022_001.png
+  bg023:
+    name: 023
+    file: Background_023_001.png
+    variants: 
+      bg023_001:
+        name: 001
+        file: Background_023_001.png
+      bg023_002:
+        name: 002
+        file: Background_023_002.png
+      bg023_003:
+        name: 003
+        file: Background_023_003.png
+      bg023_004:
+        name: 004
+        file: Background_023_004.png
+      bg023_005:
+        name: 005
+        file: Background_023_005.png
+      bg023_006:
+        name: 006
+        file: Background_023_006.png
+      bg023_007:
+        name: 007
+        file: Background_023_007.png
+      bg023_008:
+        name: 008
+        file: Background_023_008.png
+  bg024:
+    name: 024
+    file: Background_024_001.png
+    variants: 
+      bg024_001:
+        name: 001
+        file: Background_024_001.png
+      bg024_002:
+        name: 002
+        file: Background_024_002.png
+  bg025:
+    name: 025
+    file: Background_025_001.png
+    variants: 
+      bg025_001:
+        name: 001
+        file: Background_025_001.png
+      bg025_002:
+        name: 002
+        file: Background_025_002.png
+  bg026:
+    name: 026
+    file: Background_026_001.png
+  bg027:
+    name: 027
+    file: Background_027_001.png
+  bg028:
+    name: 028
+    file: Background_028_001.png
+    variants: 
+      bg028_001:
+        name: 白天
+        file: Background_028_001.png
+      bg028_002:
+        name: 夜晚
+        file: Background_028_002.png
+  bg029:
+    name: 029
+    file: Background_029_001.png
+    variants: 
+      bg029_001:
+        name: 白天
+        file: Background_029_001.png
+      bg029_002:
+        name: 夜晚
+        file: Background_029_002.png
+  bg030:
+    name: 030
+    file: Background_030_001.png
+    variants: 
+      bg030_001:
+        name: 001
+        file: Background_030_001.png
+      bg030_002:
+        name: 002
+        file: Background_030_002.png
+  bg031:
+    name: 031
+    file: Background_031_001.png
+    variants:
+      bg031_001:
+        name: 001
+        file: Background_031_001.png
+      bg031_002:
+        name: 002
+        file: Background_031_002.png
+      bg031_003:
+        name: 003
+        file: Background_031_003.png
+      bg031_004:
+        name: 004
+        file: Background_031_004.png
+      bg031_005:
+        name: 005
+        file: Background_031_005.png
+  bg032:
+    name: 032
+    file: Background_032_001.png
+  bg033:
+    name: 033
+    file: Background_033_001.png
+  bg034:
+    name: 034
+    file: Background_034_001.png

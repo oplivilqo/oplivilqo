@@ -55,14 +55,18 @@
                                         <div class="row g-2" id="backgrounds_div"></div>
                                     </div>
                                     <div class="mb-2">
+                                        <label class="form-label">内置背景(变体)</label>
+                                        <div class="row g-2" id="background_variants_div"></div>
+                                    </div>
+                                    <div class="mb-2">
                                         <label class="form-label">自定义背景</label>
                                         <div class="row g-2" id="custom_backgrounds_div"></div>
                                         <input type="file" name="custom_backgrounds" class="form-control form-control-lg" accept="image/*" multiple/>
                                         <img id="custom_background_ui" src="./assets/background/ui.png" hidden/>
                                     </div>
                                     <div class="mb-0">
-                                        <label class="form-label">自定义背景选项</label>
-                                        <div class="d-flex align-items-center flex-wrap gap-1" id="custom_background_options_div"></div>
+                                        <label class="form-label">背景选项</label>
+                                        <div class="d-flex align-items-center flex-wrap gap-1" id="background_options_div"></div>
                                     </div>
                                 </div>
                                 <div class="tab-pane active show" id="tabs-chara">
@@ -116,10 +120,40 @@
                                         <li>修改文本选项（可选）</li>
                                         <li>保存图片</li>
                                     </ol>
-                                    <h2>GitHub 仓库分支版本对比</h2>
+                                    <h2><a href="https://github.com/oplivilqo/manosaba_text_box" target="_blank">GitHub 仓库</a>分支版本对比</h2>
                                     <div class="row row-cards">
-                                        <div class="col-sm-6 col-lg-4">
-                                            <div class="card card-md">
+                                        <div class="col-sm-6 col-lg-3">
+                                            <div class="card card-link card-link-pop card-md">
+                                                <div class="card-body text-center">
+                                                    <div class="h3 mb-0">古早版本</div>
+                                                    <div class="display-6 fw-bold my-3"><a href="https://github.com/oplivilqo/manosaba_text_box/tree/legacy" target="_blank"><code>legacy</code></a></div>
+                                                    <ul class="list-unstyled lh-lg">
+                                                        <li><code>Python</code> 实现 - <span class="text-warning">需要</span>另外部署环境</li>
+                                                        <li><span class="text-danger">无</span>用户界面</li>
+                                                        <li><span class="text-danger">不支持</span>图片预览</li>
+                                                        <li><span class="text-danger">不支持</span>自定义素材</li>
+                                                        <li><span class="text-success">聊天软件集成 自动生成与发送图片</span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-lg-3">
+                                            <div class="card card-link card-link-pop card-md">
+                                                <div class="card-body text-center">
+                                                    <div class="h3 mb-0">textual TUI</div>
+                                                    <div class="display-6 fw-bold my-3"><a href="https://github.com/oplivilqo/manosaba_text_box/tree/refresh" target="_blank"><code>refresh</code></a></div>
+                                                    <ul class="list-unstyled lh-lg">
+                                                        <li><code>Python</code> 实现 - <span class="text-warning">需要</span>另外部署环境</li>
+                                                        <li><span class="text-warning">仅终端</span>用户界面</li>
+                                                        <li><span class="text-danger">不支持</span>图片预览</li>
+                                                        <li><span class="text-success">支持</span>自定义素材</li>
+                                                        <li><span class="text-success">聊天软件集成 自动生成与发送图片</span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-lg-3">
+                                            <div class="card card-link card-link-pop card-md">
                                                 <div class="card-body text-center">
                                                     <div class="h3 mb-0">tkinter GUI</div>
                                                     <div class="display-6 fw-bold my-3"><code>(undefined)</code></div>
@@ -133,35 +167,20 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-sm-6 col-lg-4">
-                                            <div class="card card-md">
-                                                <div class="card-body text-center">
-                                                    <div class="h3 mb-0">textual TUI</div>
-                                                    <div class="display-6 fw-bold my-3"><a href="https://github.com/oplivilqo/manosaba_text_box" target="_blank"><code>main</code></a> / <a href="https://github.com/oplivilqo/manosaba_text_box/tree/refresh" target="_blank"><code>refresh</code></a></div>
-                                                    <ul class="list-unstyled lh-lg">
-                                                        <li><code>Python</code> 实现 - <span class="text-warning">需要</span>另外部署环境</li>
-                                                        <li><span class="text-warning">仅终端</span>用户界面</li>
-                                                        <li><span class="text-danger">不支持</span>图片预览</li>
-                                                        <li><span class="text-success">支持</span>自定义素材</li>
-                                                        <li><span class="text-success">聊天软件集成 自动生成与发送图片</span></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6 col-lg-4">
-                                            <div class="card card-md">
+                                        <div class="col-sm-6 col-lg-3">
+                                            <div class="card card-link card-link-pop card-md">
                                                 <div class="card-body text-center">
                                                     <div class="h3 mb-0">JavaScript WebUI</div>
                                                     <div class="display-6 fw-bold my-3"><a href="https://github.com/oplivilqo/manosaba_text_box/tree/lite" target="_blank"><code>lite</code></a></div>
                                                     <ul class="list-unstyled lh-lg">
-                                                        <li><code>JavaScript</code> 实现 - <span class="text-success">无需</span>另外部署环境</li>
+                                                        <li><code>JavaScript</code> 实现 - <span class="text-success">无需</span>另外环境</li>
                                                         <li><span class="text-success">完全</span>用户界面支持</li>
                                                         <li><span class="text-success">支持</span>图片预览</li>
                                                         <li><span class="text-success">支持</span>自定义素材</li>
                                                         <li><span class="text-warning">无系统集成 手动填写文本生成图片</span></li>
                                                     </ul>
                                                 </div>
-                                                <div class="ribbon bg-success text-success-fg">当前分支</div>
+                                                <div class="ribbon bg-success text-success-fg">当前</div>
                                             </div>
                                         </div>
                                     </div>

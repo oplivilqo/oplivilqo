@@ -11,10 +11,10 @@ const TEXT_OVER = [2339,800];  // 文本范围右下角位置
 const SHADOW_OFFSET = [2, 2]; // 阴影偏移量
 const SHADOW_COLOR = [0, 0, 0]; // 黑色阴影
 const OPTION_DEFAULTS = {
-    "background": "c15",
+    "background": "bg001",
     "chara": "sherri",
     "font": "default",
-    "stretch_image": "stretch"
+    "stretch_image": "zoom_x"
 };
 
 // 角色配置字典
@@ -29,6 +29,9 @@ function initBackgrounds() {
     // 渲染背景选择
     let backgrounds_div = $("#backgrounds_div");
     backgrounds_div.empty();
+    let background_variants_div = $("#background_variants_div");
+    background_variants_div.empty();
+    background_variants_div.html(`<div class="alert alert-info" role="alert" id="background_variants_alert">当前背景无可用变体</div>`);
 
     for (const [key, value] of Object.entries(backgrounds)) {
         let bg_html = `
@@ -36,16 +39,31 @@ function initBackgrounds() {
             <label class="form-imagecheck mb-2">
                 <input name="background" type="radio" value="${key}" class="form-imagecheck-input" onchange="updateCanvas()" onclick="updateCanvas()"${key==OPTION_DEFAULTS.background ? " checked" : ""}/>
                 <span class="form-imagecheck-figure" title="${value.name}" data-bs-toggle="tooltip">
-                    <img class="form-imagecheck-image" src="./assets/background/${value.file}"/>
+                    <img class="form-imagecheck-image" src="./assets/backgrounds/${value.file}"/>
                 </span>
             </label>
         </div>
         `;
         backgrounds_div.append(bg_html);
+        if (value.variants) {
+            for (const [key2, value2] of Object.entries(value.variants)) {
+                let bg_html = `
+                <div class="col-6 col-md-3" data-background="${key}">
+                    <label class="form-imagecheck mb-2">
+                        <input name="background-variant" type="radio" value="${key2}" class="form-imagecheck-input" onchange="updateCanvas()" onclick="updateCanvas()"/>
+                        <span class="form-imagecheck-figure" title="${value2.name}" data-bs-toggle="tooltip">
+                            <img class="form-imagecheck-image" src="./assets/backgrounds/${value2.file}"/>
+                        </span>
+                    </label>
+                </div>
+                `;
+                background_variants_div.append(bg_html);
+            }
+        }
     }
 
-    let custom_background_options_div = $("#custom_background_options_div");
-    custom_background_options_div.empty();
+    let background_options_div = $("#background_options_div");
+    background_options_div.empty();
     for (const [key, value] of Object.entries(STRETCH_MODES)) {
         let option_html = `
         <label class="form-check form-check-inline flex-grow-1 my-0">
@@ -53,7 +71,7 @@ function initBackgrounds() {
             <span class="form-check-label">${value}</span>
         </label>
         `;
-        custom_background_options_div.append(option_html);
+        background_options_div.append(option_html);
     }
 }
 function initCharacters() {
@@ -212,63 +230,78 @@ function buildLocalFonts() {
 function updateCanvas() {
     let canvas = $('#canvas')[0];
     let ctx = canvas.getContext("2d");
+    let backgroundId = $('input[name="background"]:checked').val();
 
     // 清空画布
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    if ($('input[name="background"]:checked').val()) {
+    if (backgroundId) {
+        $('[data-background]').hide();
+        $(`[data-background="${backgroundId}"]`).show();
         let background = $('input[name="background"]:checked').next().children()[0];
-        if ($('input[name="background"]:checked').val() != "custom") {
-            ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-        } else {
-            let dest=[0,0];
-            let size=[0,0];
-            let scale=1;
-            switch ($('input[name="stretch_image"]:checked').val()) {
-                case "stretch_x":
-                    // 使宽度填满画布，垂直居中
-                    size[0] = canvas.width;
-                    size[1] = background.naturalHeight;
-                    dest[1] = Math.round((canvas.height - size[1]) / 2);
-                    break;
-                case "stretch_y":
-                    // 使高度填满画布，水平居中
-                    size[0] = background.naturalWidth;
-                    size[1] = canvas.height;
-                    dest[0] = Math.round((canvas.width - size[0]) / 2);
-                    break;
-                case "zoom_x": {
-                    // 缩放使宽度填满画布并保持纵横比，垂直居中
-                    scale = canvas.width / background.naturalWidth;
-                    size[0] = canvas.width;
-                    size[1] = Math.round(background.naturalHeight * scale);
-                    dest[1] = Math.round((canvas.height - size[1]) / 2);
-                    break;
+        if (backgroundId != "custom") {
+            $('#background_variants_div').parent().show();
+            if (backgrounds[backgroundId] && backgrounds[backgroundId].variants) {
+                $('#background_variants_alert').hide();
+                if (Object.keys(backgrounds[backgroundId].variants).includes($('input[name="background-variant"]:checked').val())) {
+                    background = $('input[name="background-variant"]:checked').next().children()[0];
+                } else {
+                    $(`[data-background="${backgroundId}"] input[name="background-variant"]`).first().click();
                 }
-                case "zoom_y": {
-                    // 缩放使高度填满画布并保持纵横比，水平居中
-                    scale = canvas.height / background.naturalHeight;
-                    size[0] = Math.round(background.naturalWidth * scale);
-                    size[1] = canvas.height;
-                    dest[0] = Math.round((canvas.width - size[0]) / 2);
-                    break;
-                }
-                case "original":
-                    // 原始尺寸，居中
-                    size[0] = background.naturalWidth;
-                    size[1] = background.naturalHeight;
-                    dest[0] = Math.round((canvas.width - size[0]) / 2);
-                    dest[1] = Math.round((canvas.height - size[1]) / 2);
-                    break;
-                case "stretch":
-                default:
-                    size[0] = canvas.width;
-                    size[1] = canvas.height;
-                    break;
+            } else {
+                $('#background_variants_alert').show();
+                if ($('input[name="background-variant"]:checked').val()) $('input[name="background-variant"]:checked')[0].checked = false;
             }
-            ctx.drawImage(background, dest[0], dest[1], size[0], size[1]);
-            ctx.drawImage($('#custom_background_ui')[0], 0, 0, canvas.width, canvas.height);
+        } else {
+            $('#background_variants_div').parent().hide();
         }
+        let dest=[0,0];
+        let size=[0,0];
+        let scale=1;
+        switch ($('input[name="stretch_image"]:checked').val()) {
+            case "stretch_x":
+                // 使宽度填满画布，垂直居中
+                size[0] = canvas.width;
+                size[1] = background.naturalHeight;
+                dest[1] = Math.round((canvas.height - size[1]) / 2);
+                break;
+            case "stretch_y":
+                // 使高度填满画布，水平居中
+                size[0] = background.naturalWidth;
+                size[1] = canvas.height;
+                dest[0] = Math.round((canvas.width - size[0]) / 2);
+                break;
+            case "zoom_x": {
+                // 缩放使宽度填满画布并保持纵横比，垂直居中
+                scale = canvas.width / background.naturalWidth;
+                size[0] = canvas.width;
+                size[1] = Math.round(background.naturalHeight * scale);
+                dest[1] = Math.round((canvas.height - size[1]) / 2);
+                break;
+            }
+            case "zoom_y": {
+                // 缩放使高度填满画布并保持纵横比，水平居中
+                scale = canvas.height / background.naturalHeight;
+                size[0] = Math.round(background.naturalWidth * scale);
+                size[1] = canvas.height;
+                dest[0] = Math.round((canvas.width - size[0]) / 2);
+                break;
+            }
+            case "original":
+                // 原始尺寸，居中
+                size[0] = background.naturalWidth;
+                size[1] = background.naturalHeight;
+                dest[0] = Math.round((canvas.width - size[0]) / 2);
+                dest[1] = Math.round((canvas.height - size[1]) / 2);
+                break;
+            case "stretch":
+            default:
+                size[0] = canvas.width;
+                size[1] = canvas.height;
+                break;
+        }
+        ctx.drawImage(background, dest[0], dest[1], size[0], size[1]);
+        ctx.drawImage($('#custom_background_ui')[0], 0, 0, canvas.width, canvas.height);
     }
     
     let character = $('input[name="character"]:checked').val();

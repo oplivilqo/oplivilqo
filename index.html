@@ -7,6 +7,7 @@
     <title>魔法少女的魔女审判 文本框表情包生成器</title>
     <!-- CSS files -->
     <link href="./css/tabler.min.css" type="text/css" rel="stylesheet" />
+    <link href="./css/tabler-vendors.min.css" type="text/css" rel="stylesheet" />
 </head>
 <body data-bs-theme="dark">
     <div class="page">
@@ -49,9 +50,23 @@
                         <div class="card-body">
                             <div class="tab-content">
                                 <div class="tab-pane" id="tabs-background">
-                                    <div class="mb-0">
-                                        <label class="form-label">背景图</label>
+                                    <div class="mb-2">
+                                        <label class="form-label">内置背景</label>
                                         <div class="row g-2" id="backgrounds_div"></div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">内置背景(变体)</label>
+                                        <div class="row g-2" id="background_variants_div"></div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">自定义背景</label>
+                                        <div class="row g-2" id="custom_backgrounds_div"></div>
+                                        <input type="file" name="custom_backgrounds" class="form-control form-control-lg" accept="image/*" multiple/>
+                                        <img id="custom_background_ui" src="./assets/background/ui.png" hidden/>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">背景选项</label>
+                                        <div class="d-flex align-items-center flex-wrap gap-1" id="background_options_div"></div>
                                     </div>
                                 </div>
                                 <div class="tab-pane active show" id="tabs-chara">
@@ -67,19 +82,19 @@
                                 <div class="tab-pane" id="tabs-text">
                                     <div class="mb-3">
                                         <label class="form-label">字体</label>
-                                        <div class="d-flex align-items-center flex-wrap" id="text_fonts_div"></div>
+                                        <div class="d-flex align-items-center flex-wrap gap-1" id="text_fonts_div"></div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">字号</label>
                                         <div class="d-flex align-items-center">
-                                            <input type="range" name="text_font_size" class="form-range" value="128" min="48" max="256" step="1"/>
-                                            <input class="form-control form-control-flush w-6 ms-2" name="text_font_size" type="number" value="128" step="1" min="48" max="256">
+                                            <input type="range" name="text_font_size" class="form-range" value="128" min="32" max="256" step="1"/>
+                                            <input class="form-control form-control-flush w-7 ms-2" name="text_font_size" type="number" value="128" min="32" max="256" step="1">
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">选项</label>
-                                        <div class="d-flex align-items-center flex-wrap">
-                                            <label class="form-check form-check-inline flex-grow-1 mb-0">
+                                        <div class="d-flex align-items-center flex-wrap gap-1">
+                                            <label class="form-check form-check-inline flex-grow-1 my-0">
                                                 <input class="form-check-input" type="checkbox" name="text_highlight" onchange="updateCanvas()" onclick="updateCanvas()" checked>
                                                 <span class="form-check-label">启用<span class="text-warning">【突出显示】</span></span>
                                             </label>
@@ -89,7 +104,7 @@
                                         <label class="form-label">文本</label>
                                         <div class="row g-2" id="texts_div">
                                             <div class="col">
-                                                <textarea name="text" class="form-control form-control-lg" placeholder="输入文本" oninput="updateCanvas()" onchange="updateCanvas()" rows="7" style="resize:none;"></textarea>
+                                                <textarea name="text" class="form-control" placeholder="输入文本" oninput="updateCanvas()" onchange="updateCanvas()" data-bs-toggle="autosize" style="resize:none;"></textarea>
                                             </div>
                                         </div>
                                     </div>
@@ -105,10 +120,40 @@
                                         <li>修改文本选项（可选）</li>
                                         <li>保存图片</li>
                                     </ol>
-                                    <h2>GitHub 仓库分支版本对比</h2>
+                                    <h2><a href="https://github.com/oplivilqo/manosaba_text_box" target="_blank">GitHub 仓库</a>分支版本对比</h2>
                                     <div class="row row-cards">
-                                        <div class="col-sm-6 col-lg-4">
-                                            <div class="card card-md">
+                                        <div class="col-sm-6 col-lg-3">
+                                            <div class="card card-link card-link-pop card-md">
+                                                <div class="card-body text-center">
+                                                    <div class="h3 mb-0">古早版本</div>
+                                                    <div class="display-6 fw-bold my-3"><a href="https://github.com/oplivilqo/manosaba_text_box/tree/legacy" target="_blank"><code>legacy</code></a></div>
+                                                    <ul class="list-unstyled lh-lg">
+                                                        <li><code>Python</code> 实现 - <span class="text-warning">需要</span>另外部署环境</li>
+                                                        <li><span class="text-danger">无</span>用户界面</li>
+                                                        <li><span class="text-danger">不支持</span>图片预览</li>
+                                                        <li><span class="text-danger">不支持</span>自定义素材</li>
+                                                        <li><span class="text-success">聊天软件集成 自动生成与发送图片</span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-lg-3">
+                                            <div class="card card-link card-link-pop card-md">
+                                                <div class="card-body text-center">
+                                                    <div class="h3 mb-0">textual TUI</div>
+                                                    <div class="display-6 fw-bold my-3"><a href="https://github.com/oplivilqo/manosaba_text_box/tree/refresh" target="_blank"><code>refresh</code></a></div>
+                                                    <ul class="list-unstyled lh-lg">
+                                                        <li><code>Python</code> 实现 - <span class="text-warning">需要</span>另外部署环境</li>
+                                                        <li><span class="text-warning">仅终端</span>用户界面</li>
+                                                        <li><span class="text-danger">不支持</span>图片预览</li>
+                                                        <li><span class="text-success">支持</span>自定义素材</li>
+                                                        <li><span class="text-success">聊天软件集成 自动生成与发送图片</span></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-lg-3">
+                                            <div class="card card-link card-link-pop card-md">
                                                 <div class="card-body text-center">
                                                     <div class="h3 mb-0">tkinter GUI</div>
                                                     <div class="display-6 fw-bold my-3"><code>(undefined)</code></div>
@@ -122,40 +167,36 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-sm-6 col-lg-4">
-                                            <div class="card card-md">
-                                                <div class="card-body text-center">
-                                                    <div class="h3 mb-0">textual TUI</div>
-                                                    <div class="display-6 fw-bold my-3"><a href="https://github.com/oplivilqo/manosaba_text_box" target="_blank"><code>main</code></a> / <a href="https://github.com/oplivilqo/manosaba_text_box/tree/refresh" target="_blank"><code>refresh</code></a></div>
-                                                    <ul class="list-unstyled lh-lg">
-                                                        <li><code>Python</code> 实现 - <span class="text-warning">需要</span>另外部署环境</li>
-                                                        <li><span class="text-warning">仅终端</span>用户界面</li>
-                                                        <li><span class="text-danger">不支持</span>图片预览</li>
-                                                        <li><span class="text-success">支持</span>自定义素材</li>
-                                                        <li><span class="text-success">聊天软件集成 自动生成与发送图片</span></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6 col-lg-4">
-                                            <div class="card card-md">
+                                        <div class="col-sm-6 col-lg-3">
+                                            <div class="card card-link card-link-pop card-md">
                                                 <div class="card-body text-center">
                                                     <div class="h3 mb-0">JavaScript WebUI</div>
                                                     <div class="display-6 fw-bold my-3"><a href="https://github.com/oplivilqo/manosaba_text_box/tree/lite" target="_blank"><code>lite</code></a></div>
                                                     <ul class="list-unstyled lh-lg">
-                                                        <li><code>JavaScript</code> 实现 - <span class="text-success">无需</span>另外部署环境</li>
+                                                        <li><code>JavaScript</code> 实现 - <span class="text-success">无需</span>另外环境</li>
                                                         <li><span class="text-success">完全</span>用户界面支持</li>
                                                         <li><span class="text-success">支持</span>图片预览</li>
                                                         <li><span class="text-success">支持</span>自定义素材</li>
                                                         <li><span class="text-warning">无系统集成 手动填写文本生成图片</span></li>
                                                     </ul>
                                                 </div>
-                                                <div class="ribbon bg-success text-success-fg">当前分支</div>
+                                                <div class="ribbon bg-success text-success-fg">当前</div>
                                             </div>
                                         </div>
                                     </div>
                                     <hr>
                                     <h2>更新日志</h2>
+                                    <h3>v1.0.3</h3>
+                                    <ul>
+                                        <li>不再使用上游Python版本的已合成UI的背景图片</li>
+                                        <li>一些页面样式修正</li>
+                                    </ul>
+                                    <h3>v1.0.2</h3>
+                                    <ul>
+                                        <li>新增自定义背景图片功能</li>
+                                        <li>新增自定义字体功能</li>
+                                        <li>一些页面样式修正</li>
+                                    </ul>
                                     <h3>v1.0.1</h3>
                                     <ul>
                                         <li>兼容上游仓库的素材与配置文件</li>
@@ -171,27 +212,41 @@
                                 </div>
                                 <div class="tab-pane" id="tabs-settings">
                                     <div class="mb-3" id="configs_upload_div">
-                                        <p>由于安全问题，浏览器不允许页面跨域读取文件。首次运行或脚本更新时请手动加载<code>config</code>目录下的<code>chara_meta.yml</code>和<code>text_configs.yml</code>文件。</p>
+                                        <p>由于安全问题，浏览器不允许页面跨域读取文件。首次运行或脚本更新时请手动加载<code>config</code>目录下的相应配置文件。</p>
                                         <div class="d-flex align-items-center justify-content-between mb-2">
-                                            <label class="form-label mb-0">请上传配置文件<code>chara_meta.yml</code>和<code>text_configs.yml</code>：</label>
+                                            <label class="form-label mb-0">请上传配置文件<code>chara_meta.yml</code>、<code>text_configs.yml</code>、<code>backgrounds.yml</code>和<code>fonts.yml</code>：</label>
                                             <button class="btn btn-sm" onclick="resetConfigs()">重置</button>
                                         </div>
                                         <input type="file" name="configs" class="form-control form-control-lg" accept=".yml,application/yaml" multiple/>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-6">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <label class="form-label">角色元数据 <code>chara_meta.yml</code></label>
                                                 <label class="form-label" id="chara_meta-indicator"><span class="text-danger">未加载</span></label>
                                             </div>
-                                            <textarea class="form-control" id="chara_meta" rows="20" readonly style="resize:none;"></textarea>
+                                            <textarea class="form-control font-monospace" id="chara_meta" rows="20" readonly style="resize:none;"></textarea>
                                         </div>
-                                        <div class="col-6">
+                                        <div class="col-md-6">
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <label class="form-label">文本配置 <code>text_configs.yml</code></label>
                                                 <label class="form-label" id="text_configs-indicator"><span class="text-danger">未加载</span></label>
                                             </div>
-                                            <textarea class="form-control autosize" id="text_configs" rows="20" readonly style="resize:none;"></textarea>
+                                            <textarea class="form-control font-monospace" id="text_configs" rows="20" readonly style="resize:none;"></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">背景图数据 <code>backgrounds.yml</code></label>
+                                                <label class="form-label" id="backgrounds-indicator"><span class="text-danger">未加载</span></label>
+                                            </div>
+                                            <textarea class="form-control font-monospace" id="backgrounds" rows="10" readonly style="resize:none;"></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <label class="form-label">字体配置 <code>fonts.yml</code></label>
+                                                <label class="form-label" id="fonts-indicator"><span class="text-danger">未加载</span></label>
+                                            </div>
+                                            <textarea class="form-control font-monospace" id="fonts" rows="10" readonly style="resize:none;"></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -228,6 +283,7 @@
     <script src="./js/jquery.min.js" type="application/javascript"></script>
     <script src="./js/FileSaver.min.js" type="application/javascript"></script>
     <script src="./js/js-yaml.min.js" type="application/javascript"></script>
+    <script src="./js/tom-select.base.min.js" type="application/javascript"></script>
     <script src="./js/tabler.min.js" type="application/javascript"></script>
     <script src="./js/functions.js" type="application/javascript"></script>
 </body>

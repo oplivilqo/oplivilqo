@@ -2,4 +2,10 @@
 /__pycache__/
 /.vs/
 /emoji_png/
+/config/keymap.yml
+/config/process_whitelist.yml
+/config/textual.tcss
 .DS_Store
+*.py
+requirements*.txt
+build_onefile.spec

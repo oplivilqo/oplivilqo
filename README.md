@@ -2,15 +2,15 @@
 
 一个表情包生成工具，能够快速生成带有自定义文本的魔法少女的魔女审判文本框图片。
 
-此分支在保留[主分支](https://github.com/oplivilqo/manosaba_text_box)Python脚本的同时添加了使用浏览器JavaScript实现、无需Python环境的版本，可能更适合偶尔生成图片的用户。Python脚本使用方法请见主分支说明。
+此分支是[主分支Python脚本](https://github.com/oplivilqo/manosaba_text_box)的使用浏览器JavaScript实现、无需Python环境的版本，可能更适合偶尔生成图片的用户。
 
-JavaScript版与Python版共用同一组素材与配置文件。
+JavaScript版与Python版共用相同的角色素材与相关配置文件（`chara_meta.yml`、`text_configs.yml`）。如有需要可以将Python脚本覆盖在此目录上，二者可共存，不会相互干扰。
 
 ![界面截图](https://github.com/user-attachments/assets/38d0e142-8707-4f43-b1a8-1bb0bcdbe848)
 
 ## 使用方法
 
-直接下载整个仓库然后本地使用浏览器打开`index.html`即可使用。无需部署到Web服务器，不过首次本地访问需要手动上传`config/chara_meta.yml`和`config/text_configs.yml`两个配置文件，对于手机端用户可能还是部署到服务器访问更方便一些吧……
+直接下载整个仓库然后本地使用浏览器打开`index.html`即可使用。无需部署到Web服务器，不过首次本地访问需要手动上传`config`目录下的四个配置文件`chara_meta.yml`、`text_configs.yml`、`backgrounds.yml`、`fonts.yml`，对于手机端用户可能还是部署到服务器访问更方便一些吧……
 
 ~~都有GUI了应该不用再多说什么了吧……~~
 

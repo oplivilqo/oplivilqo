@@ -1,0 +1,10 @@
+fonts:
+  font1: 
+    name: 微软雅黑
+    file: font1.ttf
+  font2: 
+    name: 宋体
+    file: font2.ttf
+  font3: 
+    name: 华文中宋
+    file: font3.ttf

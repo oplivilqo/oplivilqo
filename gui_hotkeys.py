@@ -42,7 +42,7 @@ class HotkeyManager:
                     time.sleep(1)
                     continue
                 
-                # 优先检查停止监听热键，使用更严格的防抖
+                # 优先检查停止监听热键
                 toggle_hotkey = hotkeys.get("toggle_listener", "alt+ctrl+p")
                 if self._is_hotkey_pressed(toggle_hotkey, "toggle_listener"):
                     self.gui.root.after(0, self.toggle_hotkey_listener)
@@ -95,43 +95,22 @@ class HotkeyManager:
             time.sleep(1)  # 出错时等待1秒再重试
 
     def _is_hotkey_pressed(self, hotkey, action_name):
-        """改进的热键检测方法，包含防抖和精确检测"""
+        """热键检测"""
         current_time = time.time()
         
         # 检查防抖时间
         if action_name in self.last_hotkey_time:
-            time_since_last = current_time - self.last_hotkey_time[action_name]
-            if time_since_last < self.debounce_delay:
+            if current_time - self.last_hotkey_time[action_name] < self.debounce_delay:
                 return False
         
-        # 精确检测热键组合
+        # 直接使用keyboard库的热键检测
         try:
-            # 解析热键组合
-            keys = hotkey.split('+')
-            modifiers = []
-            main_key = None
-            
-            for key in keys:
-                key_lower = key.lower()
-                if key_lower in ['ctrl', 'alt', 'shift', 'win']:
-                    modifiers.append(key_lower)
-                else:
-                    main_key = key_lower
-            
-            # 检查修饰键状态
-            for modifier in modifiers:
-                if not keyboard.is_pressed(modifier):
-                    return False
-            
-            # 检查主键状态
-            if main_key and keyboard.is_pressed(main_key):
-                # 记录触发时间
+            if keyboard.is_pressed(hotkey):
                 self.last_hotkey_time[action_name] = current_time
                 return True
-                
         except Exception as e:
             print(f"热键检测错误 {hotkey}: {e}")
-            
+        
         return False
 
     def handle_hotkey_action(self, action, char_id=None):
@@ -145,9 +124,9 @@ class HotkeyManager:
                 self.switch_character(1)  # 向后切换
             elif action == "prev_character":
                 self.switch_character(-1)  # 向前切换
-            elif action == "next_emotion":  # 新增：向前切换表情
+            elif action == "next_emotion":  # 向前切换表情
                 self.switch_emotion(1)
-            elif action == "prev_emotion":  # 新增：向后切换表情
+            elif action == "prev_emotion":  # 向后切换表情
                 self.switch_emotion(-1)
             elif action == "next_background":
                 self.switch_background(1)  # 向后切换背景
@@ -210,56 +189,79 @@ class HotkeyManager:
         if not self.hotkey_listener_active:
             self.hotkey_listener_active = True
 
-    def switch_emotion(self, direction):
-        """切换表情"""
-        # 取消情感匹配勾选
-        if self.gui.sentiment_matching_var.get():
-            self.gui.sentiment_matching_var.set(False)
-            self.gui.on_sentiment_matching_changed()
-            self.gui.update_status("已取消情感匹配（手动切换表情）")
-            
-        if self.gui.emotion_random_var.get():
-            # 如果当前是随机模式，切换到指定模式
-            self.gui.emotion_random_var.set(False)
-            self.gui.on_emotion_random_changed()
-
-        emotion_count = self.core.get_current_emotion_count()
-        current_emotion = self.core.selected_emotion or 1
-
-        new_emotion = current_emotion + direction
-        if new_emotion > emotion_count:
-            new_emotion = 1
-        elif new_emotion < 1:
-            new_emotion = emotion_count
-
-        self.core.selected_emotion = new_emotion
-        self.gui.emotion_combo.set(f"表情 {new_emotion}")
-        self.gui.update_preview()
-        self.gui.update_status(f"已切换到表情: {new_emotion}")
-
     def switch_character(self, direction):
         """切换角色"""
         current_index = self.core.current_character_index
         total_chars = len(self.core.character_list)
-
+    
         new_index = current_index + direction
         if new_index > total_chars:
             new_index = 1
         elif new_index < 1:
             new_index = total_chars
-
+    
         if self.core.switch_character(new_index):
-            # 切换角色后清理缓存
-            clear_cache("character")
-            # 更新GUI显示
-            self.gui.character_var.set(
-                f"{self.core.get_character(full_name=True)} ({self.core.get_character()})"
-            )
-            self.gui.update_emotion_options()
-            self.gui.update_preview()
-            self.gui.update_status(
-                f"已切换到角色: {self.core.get_character(full_name=True)}"
-            )
+            self._handle_character_switch_success()
+    
+    def switch_to_character_by_id(self, char_id):
+        """通过角色ID切换到指定角色"""
+        if char_id and char_id in self.core.character_list:
+            char_index = self.core.character_list.index(char_id) + 1
+            if self.core.switch_character(char_index):
+                self._handle_character_switch_success()
+    
+    def switch_emotion(self, direction):
+        """切换表情"""
+        # 取消情感匹配勾选
+        self._cancel_sentiment_matching()
+        
+        if self.gui.emotion_random_var.get():
+            # 如果当前是随机模式，切换到指定模式
+            self.gui.emotion_random_var.set(False)
+            self.gui.on_emotion_random_changed()
+    
+        emotion_count = self.core.get_current_emotion_count()
+        current_emotion = self.core.selected_emotion or 1
+    
+        new_emotion = current_emotion + direction
+        if new_emotion > emotion_count:
+            new_emotion = 1
+        elif new_emotion < 1:
+            new_emotion = emotion_count
+    
+        self.core.selected_emotion = new_emotion
+        self.gui.emotion_combo.set(f"表情 {new_emotion}")
+        self.gui.update_preview()
+        self.gui.update_status(f"已切换到表情: {new_emotion}")
+
+    def _handle_character_switch_success(self):
+        """处理角色切换成功后的通用操作"""
+        # 切换角色后清理缓存
+        clear_cache("character")
+        # 更新GUI显示
+        self.gui.character_var.set(
+            f"{self.core.get_character(full_name=True)} ({self.core.get_character()})"
+        )
+        self.gui.update_emotion_options()
+        
+        # 重置表情索引为1，与手动切换保持一致
+        self.gui.emotion_combo.set("表情 1")
+        if self.gui.emotion_random_var.get():
+            self.core.selected_emotion = None
+        else:
+            self.core.selected_emotion = 1
+        
+        self.gui.update_preview()
+        self.gui.update_status(
+            f"已切换到角色: {self.core.get_character(full_name=True)}"
+        )
+    
+    def _cancel_sentiment_matching(self):
+        """取消情感匹配并更新状态"""
+        if self.gui.sentiment_matching_var.get():
+            self.gui.sentiment_matching_var.set(False)
+            self.gui.on_sentiment_matching_changed()
+            self.gui.update_status("已取消情感匹配（手动切换表情）")
 
     def switch_background(self, direction):
         """切换背景"""
@@ -291,6 +293,14 @@ class HotkeyManager:
                     f"{self.core.get_character(full_name=True)} ({self.core.get_character()})"
                 )
                 self.gui.update_emotion_options()
+                
+                # 重置表情索引为1
+                self.gui.emotion_combo.set("表情 1")
+                if self.gui.emotion_random_var.get():
+                    self.core.selected_emotion = None
+                else:
+                    self.core.selected_emotion = 1
+                
                 self.gui.update_preview()
                 self.gui.update_status(
                     f"已快速切换到角色: {self.core.get_character(full_name=True)}"

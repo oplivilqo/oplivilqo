@@ -167,27 +167,63 @@ def draw_text_auto(
     _, best_block_h, best_line_h = measure_block(best_lines, font)
 
     # --- 6. 解析着色片段 ---
-    def parse_color_segments(s: str, in_bracket: bool) -> Tuple[list[tuple[str, Tuple[int, int, int]]], bool]:
+    def parse_color_segments(s: str, bracket_stack: list) -> Tuple[list[tuple[str, Tuple[int, int, int]]], list]:
+        """解析颜色片段，返回片段列表和更新后的括号栈"""
         segs: list[tuple[str, Tuple[int, int, int]]] = []
         buf = ""
+        
+        # 定义成对的括号和引号，包括左右相同的英文引号
+        bracket_pairs = {
+            '[': ']', '【': '】', '〔': '〕', '（': '）',
+            '‘': '’', '「': '」', '｢': '｣', '《': '》', '〈': '〉',
+            '"': '"', "'": "'", '`': '`',  # 英文引号，左右相同
+        }
+        
         for ch in s:
-            if ch in ("[", "【"):
+            # 处理左括号或引号
+            if ch in bracket_pairs.keys():
                 if buf:
-                    segs.append((buf, bracket_color if in_bracket else color))
+                    current_color = bracket_color if bracket_stack else color
+                    segs.append((buf, current_color))
                     buf = ""
-                segs.append((ch, bracket_color))
-                in_bracket = True
-            elif ch in ("]", "】"):
+                
+                # 如果是英文引号（左右相同），特殊处理
+                if ch in ('"', "'", '`'):
+                    # 如果栈顶是相同的引号，则这是关闭引号
+                    if bracket_stack and bracket_stack[-1] == ch:
+                        segs.append((ch, bracket_color))
+                        bracket_stack.pop()  # 关闭引号
+                    else:
+                        segs.append((ch, bracket_color))
+                        bracket_stack.append(ch)  # 打开引号
+                else:
+                    # 普通括号，直接打开
+                    segs.append((ch, bracket_color))
+                    bracket_stack.append(ch)  # 将左括号压栈
+                    
+            # 处理右括号
+            elif ch in bracket_pairs.values():
                 if buf:
                     segs.append((buf, bracket_color))
                     buf = ""
+                
                 segs.append((ch, bracket_color))
-                in_bracket = False
+                
+                # 如果栈不为空，尝试弹出匹配的左括号
+                if bracket_stack:
+                    last_bracket = bracket_stack[-1]
+                    # 检查当前右括号是否匹配栈顶的左括号
+                    if bracket_pairs.get(last_bracket) == ch:
+                        bracket_stack.pop()
+                # 注意：如果不匹配，我们不做任何操作，这个右括号可能是一个错误，但我们不处理
             else:
                 buf += ch
+                
         if buf:
-            segs.append((buf, bracket_color if in_bracket else color))
-        return segs, in_bracket
+            current_color = bracket_color if bracket_stack else color
+            segs.append((buf, current_color))
+            
+        return segs, bracket_stack
 
     # --- 7. 垂直对齐 ---
     if valign == "top":
@@ -199,10 +235,10 @@ def draw_text_auto(
 
     # --- 8. 绘制---
     y = y_start
-    in_bracket = False
+    bracket_stack = []  # 初始化括号栈，跨行传递状态
 
     for ln in best_lines:
-        #计算行宽
+        # 计算行宽
         line_w = temp_draw.textlength(ln, font=font)
 
         if align == "left":
@@ -212,7 +248,8 @@ def draw_text_auto(
         else:
             x = x2 - line_w
         
-        segments, in_bracket = parse_color_segments(ln, in_bracket)
+        # 解析当前行的颜色片段，传递括号栈状态
+        segments, bracket_stack = parse_color_segments(ln, bracket_stack)
         
         for seg_text, seg_color in segments:
             if not seg_text:
@@ -222,10 +259,10 @@ def draw_text_auto(
                 pilmoji.text((x, y), seg_text, font=font, fill=seg_color, emoji_position_offset=(0, 20))
                 adv = pilmoji.getsize(seg_text, font=font)[0]
             else:
-                #纯文本片段使用ImageDraw
+                # 纯文本片段使用ImageDraw
                 temp_draw.text((x+4, y+4), seg_text, font=font, fill=(0,0,0))
                 temp_draw.text((x, y), seg_text, font=font, fill=seg_color)
-                #测量宽度
+                # 测量宽度
                 adv = int(temp_draw.textlength(seg_text, font=font))
             x += adv
         

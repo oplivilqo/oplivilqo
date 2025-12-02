@@ -71,17 +71,8 @@ class ManosabaGUI:
 
     def reinitialize_hotkeys(self):
         """重新初始化热键管理器"""
-        # 停止当前的热键监听
-        self.hotkey_manager.hotkey_listener_active = False
-        
-        # 等待一小段时间确保监听线程停止
-        self.root.after(100, self._restart_hotkeys)
-        
-    def _restart_hotkeys(self):
-        """重新启动热键监听"""
-        # 重新创建热键管理器
+        # 直接重新创建热键管理器
         self.hotkey_manager = HotkeyManager(self)
-        # 重新设置热键
         self.hotkey_manager.setup_hotkeys()
         self.update_status("热键设置已更新")
 
@@ -387,11 +378,11 @@ class ManosabaGUI:
         sentiment_settings = self.core.get_gui_settings().get("sentiment_matching", {})
         current_enabled = sentiment_settings.get("enabled", False)
         
-        if self.core.sentiment_analyzer_initializing:
+        if self.core.sentiment_analyzer_status['initializing']:
             # 正在初始化，禁用复选框
             self.sentiment_checkbutton.config(state="disabled")
             self.sentiment_matching_var.set(True)
-        elif self.core.sentiment_analyzer_initialized:
+        elif self.core.sentiment_analyzer_status['initialized']:
             # 初始化成功，启用复选框
             self.sentiment_checkbutton.config(state="normal")
             self.sentiment_matching_var.set(current_enabled)
@@ -407,7 +398,7 @@ class ManosabaGUI:
         
         if not current_enabled:
             # 如果当前未启用，尝试启用
-            if not self.core.sentiment_analyzer_initialized:
+            if not self.core.sentiment_analyzer_status['initialized']:
                 # 如果未初始化，则开始初始化
                 self.update_status("正在初始化情感分析器...")
                 self.core.toggle_sentiment_matching()

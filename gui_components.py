@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk
-from PIL import ImageTk
+from PIL import Image, ImageTk
 
 
 class PreviewManager:
@@ -11,7 +11,9 @@ class PreviewManager:
     def __init__(self, gui):
         self.gui = gui
         self.core = gui.core
-        self.preview_size = (700, 525)
+
+        # 预览图片的原始副本 Image.Image类型
+        self.preview_image = None
         
         # 预览相关变量
         self.preview_label = None
@@ -62,29 +64,32 @@ class PreviewManager:
         self.preview_label = ttk.Label(parent)
         self.preview_label.pack(expand=True, fill=tk.BOTH, padx=5, pady=5)
 
+    def _resize_and_update_preview(self, image: Image.Image):
+        """根据窗口大小调整图像大小"""
+        window_width = self.gui.root.winfo_width()
+        new_width = max(200, window_width - 40)
+
+        # 计算图像比例
+        original_width, original_height = self.preview_image.size
+        aspect_ratio = original_height / original_width
+        new_height = int(new_width * aspect_ratio)
+
+        # 更新预览内容 - 缩放显示图像但不修改原始图像
+        self.preview_photo = image.resize((new_width, new_height), Image.Resampling.BILINEAR)
+        self.preview_photo = ImageTk.PhotoImage(self.preview_photo)
+        self.preview_label.configure(image=self.preview_photo)
+    
     def handle_window_resize(self, event):
         """处理窗口大小变化事件 - 调整大小并刷新内容"""
         if event.widget == self.gui.root:
-            window_width = self.gui.root.winfo_width()
-            new_width = max(200, window_width - 40)
-            new_height = int(new_width * 0.75)
-
-            if (
-                abs(new_width - self.preview_size[0]) > 30
-                or abs(new_height - self.preview_size[1]) > 20
-            ):
-                self.preview_size = (new_width, new_height)
-                # 更新预览内容
-                self.gui.update_preview()
+            self._resize_and_update_preview(self.preview_image)
+            
 
     def update_preview(self):
         """更新预览"""
         try:
-            preview_image, info = self.core.generate_preview(self.preview_size)
-
-            # 转换为 PhotoImage
-            self.preview_photo = ImageTk.PhotoImage(preview_image)
-            self.preview_label.configure(image=self.preview_photo)
+            self.preview_image, info = self.core.generate_preview()
+            self._resize_and_update_preview(self.preview_image)
 
             # 更新预览信息 - 将信息拆分成三个部分横向显示
             info_parts = info.split("\n")
@@ -121,7 +126,3 @@ class StatusManager:
         """更新状态栏"""
         self.status_var.set(message)
         self.gui.root.update_idletasks()
-
-    # def set_status(self, message: str):
-    #     """设置状态（别名方法）"""
-    #     self.update_status(message)

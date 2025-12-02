@@ -2,6 +2,8 @@
 
 from typing import Dict, Any
 import openai
+import yaml
+import os
 
 class AIClientManager:
     """AI客户端管理器"""
@@ -47,23 +49,68 @@ class AIClientManager:
             print(f"连接测试失败: {e}")
             return False
     
+    def _load_config_from_file(self) -> Dict[str, Any]:
+        """从配置文件加载配置"""
+        config_path = os.path.join(os.path.dirname(__file__), "config", "settings.yml")
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+                return config or {}
+        except Exception as e:
+            print(f"加载配置文件失败: {e}")
+            return {}
+    
+    def _save_config_to_file(self, config: Dict[str, Any]) -> bool:
+        """保存配置到文件"""
+        config_path = os.path.join(os.path.dirname(__file__), "config", "settings.yml")
+        try:
+            with open(config_path, 'w', encoding='utf-8') as f:
+                yaml.dump(config, f, default_flow_style=False, allow_unicode=True, indent=2)
+            return True
+        except Exception as e:
+            print(f"保存配置文件失败: {e}")
+            return False
+    
     def get_available_models(self) -> Dict[str, Dict[str, Any]]:
         """获取可用模型配置"""
-        # 这里可以从配置文件动态加载模型
-        # 暂时返回默认配置
-        return {
-            "ollama": {
-                "name": "Ollama",
-                "base_url": "http://localhost:11434/v1/",
-                "api_key": "",
-                "model": "qwen2.5",
-                "description": "本地运行的Ollama服务"
-            },
-            "deepseek": {
-                "name": "DeepSeek",
-                "base_url": "https://api.deepseek.com", 
-                "api_key": "",
-                "model": "deepseek-chat",
-                "description": "DeepSeek在线API"
-            }
+        # 从配置文件读取模型配置
+        config = self._load_config_from_file()
+        model_configs = config.get("sentiment_matching", {}).get("model_configs", {})
+        
+        # 构建模型信息字典
+        available_models = {}
+        model_descriptions = {
+            "ollama": "本地运行的Ollama服务",
+            "deepseek": "DeepSeek在线API", 
+            "chatGPT": "OpenAI ChatGPT服务"
         }
+        
+        for model_type, model_config in model_configs.items():
+            available_models[model_type] = {
+                "name": model_type.capitalize(),
+                "base_url": model_config.get("base_url", ""),
+                "api_key": model_config.get("api_key", ""),
+                "model": model_config.get("model", ""),
+                "description": model_config.get("description", model_descriptions.get(model_type, f"{model_type} AI服务"))
+            }
+        
+        # 如果没有从配置文件读取到模型，使用默认配置
+        if not available_models:
+            available_models = {
+                "ollama": {
+                    "name": "Ollama",
+                    "base_url": "http://localhost:11434/v1/",
+                    "api_key": "",
+                    "model": "qwen2.5",
+                    "description": "本地运行的Ollama服务"
+                },
+                "deepseek": {
+                    "name": "DeepSeek",
+                    "base_url": "https://api.deepseek.com", 
+                    "api_key": "",
+                    "model": "deepseek-chat",
+                    "description": "DeepSeek在线API"
+                }
+            }
+        
+        return available_models

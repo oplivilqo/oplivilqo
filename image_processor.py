@@ -126,6 +126,8 @@ class ImageProcessor:
         content_image: Image.Image = None,
         font_path: str = None,
         font_size: int = None,
+        text_color: tuple = (255, 255, 255),
+        bracket_color: tuple = (137, 177, 251),
         compression_settings: dict = None
     ) -> bytes:
         """快速生成图片 - 使用缓存的基础图片"""
@@ -161,7 +163,8 @@ class ImageProcessor:
                 text=text,
                 align="left",
                 valign="top",
-                color=(255, 255, 255),
+                color=text_color,
+                bracket_color=bracket_color,
                 max_font_height=max_font_height,
                 font_path=font_path,
                 compression_settings=compression_settings
@@ -172,27 +175,22 @@ class ImageProcessor:
         self,
         character_name: str,
         background_index: int,
-        emotion_index: int,
-        preview_size: tuple = (400, 300),
+        emotion_index: int
     ) -> Image.Image:
         """生成预览图片 - 同时缓存基础图片用于快速生成"""
         try:
-            # 生成基础图片
-            base_image = self.generate_base_image_with_text(
+            # 生成基础图片 - 用于快速合成
+            self.current_base_image = self.generate_base_image_with_text(
                 character_name, background_index, emotion_index
             )
 
-            # 记录当前图片用于快速生成
-            self.current_base_image = base_image#.copy()
-
-            # 调整大小用于预览
-            preview_image = base_image.copy()
-            preview_image.thumbnail(preview_size, Image.Resampling.BILINEAR)
+            # 用于 GUI 预览
+            preview_image = self.current_base_image.copy()
 
             return preview_image
         except Exception as e:
             print(f"生成预览图片失败: {e}")
-            return Image.new("RGB", preview_size, color="gray")
+            return Image.new("RGB", (400, 300), color="gray")
 
     def get_random_background(self) -> int:
         """随机选择背景"""

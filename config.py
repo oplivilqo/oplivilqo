@@ -107,14 +107,7 @@ class ConfigLoader:
     
     def load_process_whitelist(self):
         """加载进程白名单"""
-        # # 规范化平台键
-        # if platform.startswith('win'):
-        #     platform_key = 'win32'
-        # elif platform == 'darwin':
-        #     platform_key = 'darwin'
-        # else:
-        #     platform_key = 'win32'  # 默认
-            
+ 
         whitelist_file = get_resource_path(os.path.join("config", "process_whitelist.yml"))
         
         # 如果文件不存在，返回空列表
@@ -132,14 +125,6 @@ class ConfigLoader:
     def save_process_whitelist(self, processes):
         """保存进程白名单"""
         try:
-            # # 规范化平台键
-            # if platform.startswith('win'):
-            #     platform_key = 'win32'
-            # elif platform == 'darwin':
-            #     platform_key = 'darwin'
-            # else:
-            #     platform_key = 'win32'
-                
             whitelist_file = ensure_path_exists(get_resource_path(os.path.join("config", "process_whitelist.yml")))
             
             # 如果文件已存在，则先加载现有配置，然后合并

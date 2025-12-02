@@ -1,7 +1,7 @@
 """设置窗口模块"""
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import threading
 import os
 import yaml
@@ -19,9 +19,6 @@ class SettingsWindow:
 
         # 加载设置
         self.settings = self.core.get_gui_settings()
-        
-        # 初始化快捷键更改标志
-        self.hotkeys_changed = False
 
         # 获取可用的AI模型配置
         self.ai_models = self.core.get_ai_models()
@@ -38,7 +35,7 @@ class SettingsWindow:
         # 创建窗口
         self.window = tk.Toplevel(parent)
         self.window.title("设置")
-        self.window.geometry("500x700")
+        self.window.geometry("500x750")
         self.window.resizable(False, False)
         self.window.transient(parent)
         self.window.grab_set()
@@ -130,6 +127,89 @@ class SettingsWindow:
             row=2, column=0, columnspan=2, sticky=tk.W, pady=2
         )
 
+        # 文字颜色设置
+        ttk.Label(font_frame, text="文字颜色:").grid(
+            row=3, column=0, sticky=tk.W, pady=5
+        )
+        
+        color_frame = ttk.Frame(font_frame)
+        color_frame.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=5, padx=5)
+        
+        self.text_color_var = tk.StringVar(
+            value=self.settings.get("text_color", "#FFFFFF")
+        )
+        color_entry = ttk.Entry(
+            color_frame,
+            textvariable=self.text_color_var,
+            width=10
+        )
+        color_entry.pack(side=tk.LEFT, padx=(0, 5))
+        color_entry.bind("<KeyRelease>", self.on_setting_changed)
+        
+        # 颜色预览标签
+        self.color_preview_label = ttk.Label(
+            color_frame,
+            text="   ",
+            background=self.text_color_var.get(),
+            relief="solid",
+            width=3
+        )
+        self.color_preview_label.pack(side=tk.LEFT)
+        
+        # # 绑定变量变化更新预览
+        # self.text_color_var.trace_add("write", self.update_color_preview)
+        
+        # 绑定变量变化更新预览
+        def on_color_change(*args):
+                self.update_color_preview()
+                self.on_setting_changed()
+            
+        self.text_color_var.trace_add("write", on_color_change)
+
+                # 强调颜色设置
+        ttk.Label(font_frame, text="强调颜色:").grid(
+            row=4, column=0, sticky=tk.W, pady=5
+        )
+        
+        bracket_color_frame = ttk.Frame(font_frame)
+        bracket_color_frame.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=5, padx=5)
+        
+        self.bracket_color_var = tk.StringVar(
+            value=self.settings.get("bracket_color", "#89B1FB")
+        )
+        bracket_color_entry = ttk.Entry(
+            bracket_color_frame,
+            textvariable=self.bracket_color_var,
+            width=10
+        )
+        bracket_color_entry.pack(side=tk.LEFT, padx=(0, 5))
+        bracket_color_entry.bind("<KeyRelease>", self.on_setting_changed)
+        
+        # 强调颜色预览标签
+        self.bracket_color_preview_label = ttk.Label(
+            bracket_color_frame,
+            text="   ",
+            background=self.bracket_color_var.get(),
+            relief="solid",
+            width=3
+        )
+        self.bracket_color_preview_label.pack(side=tk.LEFT)
+        
+        # 绑定变量变化更新预览
+        def on_bracket_color_change(*args):
+                self.update_bracket_color_preview()
+                self.on_setting_changed()
+            
+        self.bracket_color_var.trace_add("write", on_bracket_color_change)
+        
+        # 强调颜色说明
+        ttk.Label(font_frame, 
+                text="注：该颜色控制括号内容的颜色", 
+                font=("", 8), foreground="gray").grid(
+            row=5, column=0, columnspan=2, sticky=tk.W, pady=2
+        )
+
+
         # 情感匹配设置
         sentiment_frame = ttk.LabelFrame(parent, text="情感匹配设置", padding="10")
         sentiment_frame.pack(fill=tk.X, pady=5)
@@ -177,7 +257,7 @@ class SettingsWindow:
 
         # 情感匹配说明
         ttk.Label(sentiment_frame, 
-                text="注：在主界面启用情感匹配以进行连接，点击测试连接按钮也行，启用后会使用ai来自动选择表情", 
+                text="注：在主界面点击情感匹配以进行连接，点击测试连接按钮也行", 
                 font=("", 8), foreground="gray").grid(
             row=0, column=0, columnspan=3, sticky=tk.W, pady=2
         )
@@ -251,9 +331,10 @@ class SettingsWindow:
 
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
+        
         # 从配置文件重新加载快捷键
-        hotkeys = self.core.config_loader.load_keymap(self.platform)
+        self.original_hotkeys = self.core.config_loader.load_keymap(self.platform_key)
+        hotkeys = self.original_hotkeys
         
         # 生成快捷键放在第一个
         generate_frame = ttk.LabelFrame(scrollable_frame, text="生成控制", padding="10")
@@ -377,17 +458,6 @@ class SettingsWindow:
         setattr(self, f"{key}_hotkey_var", hotkey_var)
 
         entry = ttk.Entry(parent, textvariable=hotkey_var, width=20)
-        entry.grid(row=row, column=1, padx=5, pady=2, sticky=tk.W)
-
-    def create_hotkey_display_row(self, parent, label, key, hotkey_value, row):
-        """创建快捷键显示行（只读）"""
-        ttk.Label(parent, text=label).grid(row=row, column=0, sticky=tk.W, pady=2)
-
-        # 快捷键显示（只读）
-        hotkey_var = tk.StringVar(value=hotkey_value)
-        setattr(self, f"{key}_hotkey_var", hotkey_var)
-
-        entry = ttk.Entry(parent, textvariable=hotkey_var, width=20, state="readonly")
         entry.grid(row=row, column=1, padx=5, pady=2, sticky=tk.W)
 
     def create_character_hotkey_row(
@@ -583,6 +653,28 @@ class SettingsWindow:
         self.settings["font_family"] = self.font_family_var.get()
         self.settings["font_size"] = self.font_size_var.get()
 
+        # 只在颜色有效时更新设置中的颜色值
+        color_value = self.text_color_var.get()
+        if self.validate_color_format(color_value):
+            # 更新颜色预览
+            self.color_preview_label.configure(background=color_value)
+            # 更新设置字典中的颜色值
+            self.settings["text_color"] = color_value
+        else:
+            # 颜色无效时，不更新设置字典，保持之前的有效值
+            pass
+        
+        # 更新强调颜色设置
+        bracket_color_value = self.bracket_color_var.get()
+        if self.validate_color_format(bracket_color_value):
+            # 更新强调颜色预览
+            self.bracket_color_preview_label.configure(background=bracket_color_value)
+            # 更新设置字典中的强调颜色值
+            self.settings["bracket_color"] = bracket_color_value
+        else:
+            # 颜色无效时，不更新设置字典，保持之前的有效值
+            pass
+
         # 更新情感匹配设置
         if "sentiment_matching" not in self.settings:
             self.settings["sentiment_matching"] = {}
@@ -624,38 +716,41 @@ class SettingsWindow:
 
     def on_save(self):
         """保存设置并关闭窗口"""
-        self.on_apply()
-        self.window.destroy()
+        if self.on_apply():
+            self.window.destroy()
 
     def on_apply(self):
         """应用设置但不关闭窗口"""
+        # 验证颜色值
+        if not self.validate_color_format(self.text_color_var.get()):
+            messagebox.showerror("颜色错误", "颜色格式无效，请输入有效的十六进制颜色值（例如：#FFFFFF）")
+            return False
+        
         self.on_setting_changed()
-        # 保存设置到文件
-        self.core.save_gui_settings(self.settings)
-        # 保存快捷键设置
-        self.save_hotkey_settings()
-        # 保存进程白名单
-        self.save_whitelist_settings()
-        # 只在快捷键有更改时重新初始化热键管理器
-        if self.hotkeys_changed:
-            # 重新加载配置到core
+
+        # 检查快捷键是否有更改并保存
+        if self._check_hotkeys_changed():
+            if not self.save_hotkey_settings():
+                return False
+            # 只在快捷键有更改时重新初始化热键管理器
             self.core.reload_configs()
             self.gui.reinitialize_hotkeys()
-            self.hotkeys_changed = False  # 重置标志
+            self.hotkeys_changed = False
+
+        # 保存设置到文件
+        self.core.save_gui_settings(self.settings)
+        # 保存进程白名单
+        self.save_whitelist_settings()
+
         # 应用设置时检查是否需要重新初始化AI模型
         self.core._reinitialize_sentiment_analyzer_if_needed()
-
+        return True
 
     def save_hotkey_settings(self):
         """保存快捷键设置"""
-        # 获取当前平台
-        platform = sys.platform
-        if platform.startswith('win'):
-            platform_key = 'win32'
-        elif platform == 'darwin':
-            platform_key = 'darwin'
-        else:
-            platform_key = 'win32'
+        # 检查快捷键有效性
+        if not self._validate_hotkeys():
+            return False  # 如果快捷键无效，返回False
 
         # 加载现有的keymap配置
         keymap_file = os.path.join(self.core.config.BASE_PATH, "config", "keymap.yml")
@@ -666,8 +761,8 @@ class SettingsWindow:
             keymap_data = {}
 
         # 确保当前平台配置存在
-        if platform_key not in keymap_data:
-            keymap_data[platform_key] = {}
+        if self.platform_key not in keymap_data:
+            keymap_data[self.platform_key] = {}
 
         # 更新当前平台的快捷键
         for key in ['start_generate', 'next_character', 'prev_character', 'next_emotion', 'prev_emotion', 
@@ -675,18 +770,71 @@ class SettingsWindow:
             var_name = f"{key}_hotkey_var"
             if hasattr(self, var_name):
                 hotkey_var = getattr(self, var_name)
-                keymap_data[platform_key][key] = hotkey_var.get()
+                keymap_data[self.platform_key][key] = hotkey_var.get()
 
         # 保存回文件
         try:
             os.makedirs(os.path.dirname(keymap_file), exist_ok=True)
             with open(keymap_file, 'w', encoding='utf-8') as f:
                 yaml.dump(keymap_data, f, allow_unicode=True, default_flow_style=False)
+            
+            # 更新原始快捷键以反映保存状态
+            self.original_hotkeys = keymap_data[self.platform_key]
             return True
         except Exception as e:
             print(f"保存快捷键设置失败: {e}")
             return False
+    
+    def _validate_hotkeys(self):
+        """验证快捷键输入的有效性"""
+        valid_modifiers = ['ctrl', 'alt', 'shift', 'win']
+        valid_keys = [
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
+            'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12',
+            'space', 'tab', 'enter', 'esc', 'backspace', 'delete', 'insert', 'home', 'end',
+            'pageup', 'pagedown', 'up', 'down', 'left', 'right'
+        ]
+        
+        # 获取所有快捷键变量
+        hotkey_vars = []
+        for key in ['start_generate', 'next_character', 'prev_character', 'next_emotion', 'prev_emotion', 
+                'next_background', 'prev_background', 'toggle_listener']:
+            var_name = f"{key}_hotkey_var"
+            if hasattr(self, var_name):
+                hotkey_vars.append((key, getattr(self, var_name)))
+        
+        # 检查每个快捷键
+        for key_name, hotkey_var in hotkey_vars:
+            hotkey = hotkey_var.get().strip().lower()
+            if not hotkey:
+                continue  # 空快捷键跳过检查
+                
+            # 检查格式：modifier+key 或 modifier+modifier+key
+            parts = hotkey.split('+')
+            if len(parts) < 2 or len(parts) > 3:
+                self._show_hotkey_error(f"快捷键 '{hotkey}' 格式无效，应为：修饰键+按键")
+                return False
+            
+            # 检查修饰键
+            for modifier in parts[:-1]:
+                if modifier not in valid_modifiers:
+                    self._show_hotkey_error(f"快捷键 '{hotkey}' 包含无效修饰键 '{modifier}'")
+                    return False
+            
+            # 检查主按键
+            main_key = parts[-1]
+            if main_key not in valid_keys:
+                self._show_hotkey_error(f"快捷键 '{hotkey}' 包含无效按键 '{main_key}'")
+                return False
+        
+        return True
 
+    def _show_hotkey_error(self, message):
+        """显示快捷键错误消息"""
+        messagebox.showerror("快捷键错误", message)
+        
     def save_whitelist_settings(self):
         """保存进程白名单设置"""
         # 从文本框获取内容
@@ -706,16 +854,41 @@ class SettingsWindow:
     def _check_hotkeys_changed(self):
         """检查快捷键是否有更改"""
         # 获取当前快捷键设置
-        current_hotkeys = {}
+
         for key in ['start_generate', 'next_character', 'prev_character', 'next_emotion', 'prev_emotion', 
                    'next_background', 'prev_background', 'toggle_listener']:
             var_name = f"{key}_hotkey_var"
             if hasattr(self, var_name):
-                hotkey_var = getattr(self, var_name)
-                current_hotkeys[key] = hotkey_var.get()
+                if  getattr(self, var_name).get() != self.original_hotkeys[key]:
+                    return True
 
-        # 获取原始快捷键设置
-        original_hotkeys = self.core.config_loader.load_keymap(self.platform)
+        return False
 
-        # 比较是否有更改
-        self.hotkeys_changed = current_hotkeys != original_hotkeys
+    def update_color_preview(self, *args):
+        """更新颜色预览标签"""
+        color_value = self.text_color_var.get()
+        # 验证颜色格式
+        if self.validate_color_format(color_value):
+            # 更新预览标签背景色
+            self.color_preview_label.configure(background=color_value)
+        else:
+            # 如果颜色格式无效，显示默认颜色（保持原样，不更新）
+            pass  # 不更新预览，保持之前的状态
+    
+    def update_bracket_color_preview(self, *args):
+        """更新强调颜色预览标签"""
+        color_value = self.bracket_color_var.get()
+        # 验证颜色格式
+        if self.validate_color_format(color_value):
+            # 更新预览标签背景色
+            self.bracket_color_preview_label.configure(background=color_value)
+        else:
+            # 如果颜色格式无效，显示默认颜色（保持原样，不更新）
+            pass  # 不更新预览，保持之前的状态
+
+    def validate_color_format(self, color_value):
+        """验证颜色格式是否为有效的十六进制颜色"""
+        import re
+        # 匹配 #FFFFFF 格式
+        pattern = r'^#([A-Fa-f0-9]{6})$'
+        return re.match(pattern, color_value) is not None

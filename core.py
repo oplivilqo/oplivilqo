@@ -67,9 +67,11 @@ class ManosabaCore:
 
         # 初始化情感分析器 - 不在这里初始化，等待特定时机
         self.sentiment_analyzer = SentimentAnalyzer()
-        self.sentiment_analyzer_initialized = False
-        self.sentiment_analyzer_initializing = False  # 新增：初始化中状态
-        self.current_ai_config = {}  # 记录当前AI配置
+        self.sentiment_analyzer_status = {
+            'initialized': False,
+            'initializing': False,
+            'current_config': {}
+        }
         self.gui_callback = None  # 新增：用于通知GUI状态变化的回调函数
         
         # 程序启动时开始预加载图片
@@ -118,7 +120,7 @@ class ManosabaCore:
         """异步初始化情感分析器"""
         def init_task():
             try:
-                self.sentiment_analyzer_initializing = True
+                self.sentiment_analyzer_status['initializing'] = True
                 self._notify_gui_status_change(False, False, True)
                 
                 sentiment_settings = self.gui_settings.get("sentiment_matching", {})
@@ -128,7 +130,7 @@ class ManosabaCore:
                     config = model_configs.get(client_type, {})
                     
                     # 记录当前配置
-                    self.current_ai_config = {
+                    self.sentiment_analyzer_status['current_config'] = {
                         'client_type': client_type,
                         'config': config.copy()
                     }
@@ -137,30 +139,30 @@ class ManosabaCore:
                     
                     if success:
                         self.update_status("情感分析器初始化完成，功能已启用")
-                        self.sentiment_analyzer_initialized = True
+                        self.sentiment_analyzer_status['initialized'] = True
                         # 通知GUI初始化成功
                         self._notify_gui_status_change(True, True, False)
                     else:
                         self.update_status("情感分析器初始化失败，功能已禁用")
-                        self.sentiment_analyzer_initialized = False
+                        self.sentiment_analyzer_status['initialized'] = False
                         # 通知GUI初始化失败，需要禁用情感匹配
                         self._notify_gui_status_change(False, False, False)
                         # 更新设置，禁用情感匹配
                         self._disable_sentiment_matching()
                 else:
                     self.update_status("情感匹配功能未启用，跳过初始化")
-                    self.sentiment_analyzer_initialized = False
+                    self.sentiment_analyzer_status['initialized'] = False
                     self._notify_gui_status_change(False, False, False)
                     
             except Exception as e:
                 self.update_status(f"情感分析器初始化失败: {e}，功能已禁用")
-                self.sentiment_analyzer_initialized = False
+                self.sentiment_analyzer_status['initialized'] = False
                 # 通知GUI初始化失败，需要禁用情感匹配
                 self._notify_gui_status_change(False, False, False)
                 # 更新设置，禁用情感匹配
                 self._disable_sentiment_matching()
             finally:
-                self.sentiment_analyzer_initializing = False
+                self.sentiment_analyzer_status['initializing'] = False
         
         # 在后台线程中初始化
         init_thread = threading.Thread(target=init_task, daemon=True)
@@ -169,7 +171,7 @@ class ManosabaCore:
     def toggle_sentiment_matching(self):
         """切换情感匹配状态"""
         # 如果正在初始化，不处理点击
-        if self.sentiment_analyzer_initializing:
+        if self.sentiment_analyzer_status['initializing']:
             return
             
         sentiment_settings = self.gui_settings.get("sentiment_matching", {})
@@ -177,7 +179,7 @@ class ManosabaCore:
         
         if not current_enabled:
             # 如果当前未启用，则启用并初始化
-            if not self.sentiment_analyzer_initialized:
+            if not self.sentiment_analyzer_status['initialized']:
                 # 如果未初始化，则开始初始化
                 self.update_status("正在初始化情感分析器...")
                 if "sentiment_matching" not in self.gui_settings:
@@ -196,7 +198,7 @@ class ManosabaCore:
             self.update_status("已禁用情感匹配功能")
             self.gui_settings["sentiment_matching"]["enabled"] = False
             self.config_loader.save_gui_settings(self.gui_settings)
-            self._notify_gui_status_change(self.sentiment_analyzer_initialized, False, False)
+            self._notify_gui_status_change(self.sentiment_analyzer_status['initialized'], False, False)
 
     def _disable_sentiment_matching(self):
         """禁用情感匹配设置"""
@@ -211,8 +213,8 @@ class ManosabaCore:
         sentiment_settings = self.gui_settings.get("sentiment_matching", {})
         if not sentiment_settings.get("enabled", False):
             # 如果功能被禁用，重置状态
-            if self.sentiment_analyzer_initialized:
-                self.sentiment_analyzer_initialized = False
+            if self.sentiment_analyzer_status['initialized']:
+                self.sentiment_analyzer_status['initialized'] = False
                 self.update_status("情感匹配已禁用，重置分析器状态")
                 self._notify_gui_status_change(False, False, False)
             return
@@ -227,33 +229,17 @@ class ManosabaCore:
         }
         
         # 检查配置是否有变化
-        if new_config != self.current_ai_config:
+        if new_config != self.sentiment_analyzer_status['current_config']:
             self.update_status("AI配置已更改，重新初始化情感分析器")
-            self.sentiment_analyzer_initialized = False
-            self.current_ai_config = new_config
+            self.sentiment_analyzer_status['initialized'] = False
+            self.sentiment_analyzer_status['current_config'] = new_config
             # 通知GUI开始重新初始化
             self._notify_gui_status_change(False, False, False)
             self._initialize_sentiment_analyzer_async()
 
     def get_ai_models(self) -> Dict[str, Dict[str, Any]]:
         """获取可用的AI模型配置"""
-        # 从配置文件加载或返回默认配置
-        return {
-            "ollama": {
-                "name": "Ollama",
-                "base_url": "http://localhost:11434/v1/",
-                "api_key": "",
-                "model": "qwen2.5",
-                "description": "本地运行的ai模型"
-            },
-            "deepseek": {
-                "name": "DeepSeek", 
-                "base_url": "https://api.deepseek.com",
-                "api_key": "",
-                "model": "deepseek-chat",
-                "description": "DeepSeek线上模型"
-            }
-        }
+        return self.sentiment_analyzer.client_manager.get_available_models()
 
     def test_ai_connection(self, client_type: str, config: Dict[str, Any]) -> bool:
         """测试AI连接 - 这会进行模型初始化"""
@@ -265,18 +251,18 @@ class ManosabaCore:
                 self.update_status(f"AI连接测试成功: {client_type}")
                 # 如果测试成功，可以更新主分析器
                 self.sentiment_analyzer.initialize(client_type, config)
-                self.sentiment_analyzer_initialized = True
+                self.sentiment_analyzer_status['initialized'] = True
                 # 通知GUI测试成功
                 self._notify_gui_status_change(True, True)
             else:
                 self.update_status(f"AI连接测试失败: {client_type}")
-                self.sentiment_analyzer_initialized = False
+                self.sentiment_analyzer_status['initialized'] = False
                 # 通知GUI测试失败
                 self._notify_gui_status_change(False, False)
             return success
         except Exception as e:
             self.update_status(f"连接测试失败: {e}")
-            self.sentiment_analyzer_initialized = False
+            self.sentiment_analyzer_status['initialized'] = False
             # 通知GUI测试失败
             self._notify_gui_status_change(False, False)
             return False
@@ -286,7 +272,7 @@ class ManosabaCore:
         if not text.strip():
             return None
         
-        if not self.sentiment_analyzer_initialized:
+        if not self.sentiment_analyzer_status['initialized']:
             return None
     
         try:
@@ -305,10 +291,6 @@ class ManosabaCore:
                 # 如果没有对应的情感，使用无感情表情
                 emotion_indices = character_meta.get("无感情", [])
                 if not emotion_indices:
-                    # # 如果无感情表情也不存在，返回随机表情
-                    # emotion_count = self.get_current_emotion_count()
-                    # if emotion_count > 0:
-                    #     return random.randint(1, emotion_count)
                     return None
                 
             # 随机选择一个表情索引
@@ -325,14 +307,13 @@ class ManosabaCore:
     def _update_emotion_by_sentiment(self, text: str) -> bool:
         """根据文本情感更新表情，返回是否成功更新"""
         # 检查情感分析器是否已初始化
-        if not self.sentiment_analyzer_initialized:
+        if not self.sentiment_analyzer_status['initialized']:
             self.update_status("情感分析器未初始化，跳过情感分析")
             return False
             
         emotion_index = self._get_emotion_by_sentiment(text)
         if emotion_index:
             self.selected_emotion = emotion_index
-            # self.preview_emotion = emotion_index
             return True
         return False
 
@@ -485,7 +466,7 @@ class ManosabaCore:
 
         return new_clip.strip()
 
-    def generate_preview(self, preview_size=(400, 300)) -> tuple:
+    def generate_preview(self) -> tuple:
         """生成预览图片和相关信息"""
         character_name = self.get_character()
         emotion_count = self.get_current_emotion_count()
@@ -508,7 +489,7 @@ class ManosabaCore:
 
         # 生成预览图片
         preview_image = self.image_processor.generate_preview_image(
-            character_name, background_index, emotion_index, preview_size
+            character_name, background_index, emotion_index
         )
 
         # 构建预览信息 - 显示实际使用的索引值
@@ -547,7 +528,7 @@ class ManosabaCore:
         # selected_emotion_by_ai = None
 
         if (sentiment_settings.get("enabled", False) and 
-            self.sentiment_analyzer_initialized and
+            self.sentiment_analyzer_status['initialized'] and
             text.strip() and 
             image is None):
             
@@ -555,12 +536,11 @@ class ManosabaCore:
             emotion_updated = self._update_emotion_by_sentiment(text)
             
             if emotion_updated:
-                # selected_emotion_by_ai = self.selected_emotion
                 self.update_status("情感分析完成，更新表情")
                 print(f"[{int((time.time()-start_time)*1000)}] 情感分析完成")
                 # 刷新预览以显示新的表情
                 base_msg += f"情感: {self.sentiment_analyzer.selected_emotion}  "
-                self.generate_preview(self.preview_size if hasattr(self, 'preview_size') else (400, 300))
+                self.generate_preview()
                 
             else:
                 self.update_status("情感分析失败，使用默认表情")
@@ -596,6 +576,16 @@ class ManosabaCore:
             else:
                 font_path = self.get_current_font()  # 使用角色专用字体
 
+            # 获取文字颜色设置
+            text_color_hex = self.gui_settings.get("text_color", "#FFFFFF")
+            # 将十六进制颜色转换为RGB元组
+            text_color = self.hex_to_rgb(text_color_hex)
+
+            # 获取强调颜色设置
+            bracket_color_hex = self.gui_settings.get("bracket_color", "#89B1FB")
+            # 将十六进制颜色转换为RGB元组
+            bracket_color = self.hex_to_rgb(bracket_color_hex)
+
             # 生成图片
             png_bytes = self.image_processor.generate_image_fast(
                 character_name,
@@ -603,6 +593,8 @@ class ManosabaCore:
                 image,
                 font_path,
                 font_size,
+                text_color,
+                bracket_color,
                 self.gui_settings.get("image_compression", {})
             )
 
@@ -665,3 +657,10 @@ class ManosabaCore:
         """更新状态（供外部调用）"""
         if self.status_callback:
             self.status_callback(message)
+
+    def hex_to_rgb(self, hex_color: str) -> tuple:
+        """将十六进制颜色转换为RGB元组"""
+        hex_color = hex_color.lstrip('#')
+        if len(hex_color) == 3:
+            hex_color = ''.join([c*2 for c in hex_color])
+        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))

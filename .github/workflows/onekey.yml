@@ -1,4 +1,4 @@
-name: "构建EXE (带资源文件)"
+name: "构建EXE [legacy怀旧版] (带资源文件)"
 
 on:
   pull_request:

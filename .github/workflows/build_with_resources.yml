@@ -1,6 +1,9 @@
 name: "构建EXE [legacy怀旧版] (带资源文件)"
 
 on:
+  push:
+      branches:
+        - legacy
   pull_request:
     branches:
       - legacy

@@ -1,4 +1,4 @@
-name: "打包 .exe 程序 - legacy 分支（怀旧版）"
+name: "构建EXE (带资源文件)"
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: refresh
+          ref: legacy
       
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -32,15 +32,19 @@ jobs:
             pip install -r requirements.txt
           }
       
-      - name: Build main.exe
+      - name: Build main.exe with resources
         run: |
-          pyinstaller --onefile --name main src/main.py
+          pyinstaller --onefile --name main `
+            --add-data "assets;assets" `
+            --add-data "config;config" `
+            --add-data "emoji_png;emoji_png" `
+            --noconsole `
+            main.py
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: executables
+          name: legacy-executables
           path: |
             dist/main.exe
-            dist/tui.exe
           retention-days: 30

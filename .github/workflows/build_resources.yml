@@ -1,0 +1,47 @@
+name: "构建EXE [legacy怀旧版] (带资源文件)"
+
+on:
+  pull_request:
+    branches:
+      - legacy
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: legacy
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          if (Test-Path requirements.txt) {
+            pip install -r requirements.txt
+          }
+      
+      - name: Build main.exe with resources
+        run: |
+          pyinstaller --onefile --name main `
+            --add-data "assets;assets" `
+            --add-data "config;config" `
+            --add-data "emoji_png;emoji_png" `
+            --noconsole `
+            main.py
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-executables
+          path: |
+            dist/main.exe
+          retention-days: 30

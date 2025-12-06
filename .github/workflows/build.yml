@@ -1,0 +1,50 @@
+name: Build Executables (.exe)
+
+on:
+  push:
+    branches:
+      - refresh
+  pull_request:
+    branches:
+      - refresh
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: refresh
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          if (Test-Path requirements.txt) {
+            pip install -r requirements.txt
+          }
+      
+      - name: Build main.exe
+        run: |
+          pyinstaller --onefile --name main src/main.py
+      
+      - name: Build tui.exe
+        run: |
+          pyinstaller --onefile --name tui src/tui. py
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: executables
+          path: |
+            dist/main.exe
+            dist/tui.exe
+          retention-days: 30

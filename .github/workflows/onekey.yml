@@ -1,9 +1,6 @@
 name: "构建EXE (带资源文件)"
 
 on:
-  push:
-    branches:
-      - legacy
   pull_request:
     branches:
       - legacy
